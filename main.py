@@ -402,7 +402,7 @@ TOOL_DECLARATIONS = [
             "action=abort clears draft. action=link opens WhatsApp Setup. "
             "auto_reply_on / auto_reply_off / auto_reply_status for DM auto-replies "
             "(never groups). auto_reply_clear_cooldown resets per-chat cooldown. "
-            "Read/unread do not send. For a topic-only automatic message, use action=message with contact and topic; the agent writes detailed Roman Urdu and requires delivery proof. Do not claim sent unless the tool result says Sent."
+            "Read/unread do not send. For a topic-only automatic message, use action=message with contact and topic. Report WhatsApp accepted only when the tool result explicitly says WhatsApp accepted; queued means unconfirmed, and failed means failed. Never claim delivered."
         ),
         "parameters": {
             "type": "OBJECT",
@@ -1734,9 +1734,10 @@ class AthenaLive:
             await self.session.send_client_content(
                 turns={"parts": [{
                     "text": (
-                        f"[SYSTEM] Permission was granted and the action already COMPLETED. "
+                        f"[SYSTEM] Permission was granted and the tool execution returned. "
                         f"Tool '{name}' args={args_json}. Result: {result}. "
-                        f"Tell the user this outcome. Do NOT ask for permission. "
+                        f"Report this result exactly; do not upgrade queued, unconfirmed, or failed into success. "
+                        f"Do NOT ask for permission. "
                         f"Do NOT call the tool again."
                     )
                 }]},

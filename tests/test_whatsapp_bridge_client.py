@@ -31,38 +31,116 @@ def test_cache_rows_require_a_trusted_name(monkeypatch):
     )
 
 
-def test_send_requires_bridge_message_confirmation(monkeypatch):
-    monkeypatch.setattr(bridge, "ensure_bridge", lambda: (True, ""))
-    monkeypatch.setattr(bridge, "status", lambda: {"state": "connected"})
-    monkeypatch.setattr(bridge, "_http", lambda *args, **kwargs: _Response({"ok": True, "sent": True}))
-
-    result = bridge.send("123@s.whatsapp.net", "hello")
-
-    assert result["ok"] is False
-    assert result["sent"] is False
-    assert "message" in result["error"]
-
-
-def test_send_returns_proof_when_bridge_confirms(monkeypatch):
+def test_send_accepts_queued_bridge_response(monkeypatch):
     monkeypatch.setattr(bridge, "ensure_bridge", lambda: (True, ""))
     monkeypatch.setattr(bridge, "status", lambda: {"state": "connected"})
     monkeypatch.setattr(
         bridge,
         "_http",
-        lambda *args, **kwargs: _Response({"ok": True, "sent": True, "messageId": "msg-1", "jid": "123@s.whatsapp.net"}),
+        lambda *args, **kwargs: _Response({"ok": True, "sent": True, "status": "queued", "queueId": "q-1"}),
     )
 
     result = bridge.send("123@s.whatsapp.net", "hello")
 
-    assert result == {"ok": True, "sent": True, "messageId": "msg-1", "jid": "123@s.whatsapp.net"}
+    assert result == {
+        "ok": True,
+        "sent": False,
+        "accepted": False,
+        "status": "QUEUED",
+        "messageId": "",
+        "queueId": "q-1",
+        "jid": "123@s.whatsapp.net",
+        "error": "",
+    }
+
+
+def test_send_normalizes_queued_bridge_response(monkeypatch):
+    monkeypatch.setattr(bridge, "ensure_bridge", lambda: (True, ""))
+    monkeypatch.setattr(bridge, "status", lambda: {"state": "connected"})
+    monkeypatch.setattr(
+        bridge,
+        "_http",
+        lambda *args, **kwargs: _Response({"ok": True, "status": "queued", "queueId": "q-2", "jid": "123@s.whatsapp.net"}),
+    )
+
+    result = bridge.send("123@s.whatsapp.net", "hello")
+
+    assert result == {
+        "ok": True,
+        "sent": False,
+        "accepted": False,
+        "status": "QUEUED",
+        "messageId": "",
+        "queueId": "q-2",
+        "jid": "123@s.whatsapp.net",
+        "error": "",
+    }
 
 
 def test_whatsapp_topic_expands_in_roman_urdu():
     message = control.expand_topic_roman_urdu("ask for project update", "Ali")
 
-    assert message.startswith("Assalam o Alaikum Ali")
-    assert "project ki current progress" in message
-    assert "please" not in message.lower()
+    assert message.startswith("Hello Ali")
+    assert "current project progress" in message
+    assert "Roman Urdu" not in message
+
+
+def test_auto_reply_bypasses_contact_lookup_for_incoming_jid(monkeypatch):
+    monkeypatch.setattr(control, "has_pending_compose", lambda: False)
+    monkeypatch.setattr(
+        control.bridge,
+        "send",
+        lambda jid, message: {
+            "ok": True,
+            "status": "queued",
+            "jid": jid,
+        },
+    )
+    monkeypatch.setattr(
+        control,
+        "_resolve_contact",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("lookup must be bypassed")),
+    )
+
+    result = control.send_auto_reply("Unknown sender", jid="923001234567@s.whatsapp.net")
+
+    assert result == "WhatsApp auto-reply queued, but acceptance was not confirmed."
+
+
+def test_compose_verifies_explicit_phone_before_sending(monkeypatch):
+    monkeypatch.setattr(
+        control.bridge,
+        "resolve",
+        lambda *args, **kwargs: {
+            "ok": True,
+            "status": "FOUND",
+            "source": "whatsapp",
+            "jid": "923000000000@s.whatsapp.net",
+            "name": "923000000000",
+            "display_name": "923000000000",
+            "isGroup": False,
+        },
+    )
+    monkeypatch.setattr(
+        control.bridge,
+        "send",
+        lambda jid, message, **kwargs: {
+            "ok": True,
+            "status": "queued",
+            "jid": jid,
+        },
+    )
+
+    result = control.compose("923000000000", "Hello", send_now=True)
+
+    assert result.startswith("WhatsApp send queued")
+
+
+def test_whatsapp_signature_is_exact():
+    message = control.with_signature("Hello")
+
+    assert message.endswith("\n- Composed by Atlas")
+    assert "Athena" not in message
 
 
 def test_whatsapp_numeric_contact_is_rejected_without_manual_number_prompt(monkeypatch):

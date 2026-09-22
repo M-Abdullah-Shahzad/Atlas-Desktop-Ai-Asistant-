@@ -7,7 +7,6 @@ Compose → confirm → send. Auto-reply via whatsapp_watch + bridge.
 from __future__ import annotations
 
 import re
-import logging
 import shutil
 import subprocess
 import sys
@@ -18,8 +17,6 @@ from pathlib import Path
 from typing import Any
 
 from actions import whatsapp_bridge_client as bridge
-
-_log = logging.getLogger(__name__)
 
 
 def _assistant_name() -> str:
@@ -119,26 +116,18 @@ def _qr_hint() -> str:
     return ""
 
 
-def _clean_connection_error(error: str) -> str:
-    text = str(error or "").strip()
-    lowered = text.lower()
-    if any(token in lowered for token in ("net:", "connection", "timed out", "timeout", "vpn", "econn", "network")):
-        return f"WhatsApp connection failed: {text or 'network or VPN connection could not be established.'}"
-    return text
-
-
 def _ensure_ready(player=None) -> str | None:
     ok, msg = bridge.ensure_bridge()
     if not ok:
         _try_show_setup_ui(player)
-        return _clean_connection_error(msg)
+        return msg
     st = bridge.status().get("state")
     if st == "connected":
         return None
     _try_show_setup_ui(player)
     if st == "qr":
         return f"WhatsApp not linked yet.{_qr_hint()}"
-    return _clean_connection_error(f"WhatsApp bridge is {st}.{_qr_hint()}")
+    return f"WhatsApp bridge is {st}.{_qr_hint()}"
 
 
 _IMAGE_EXT = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
@@ -300,100 +289,31 @@ def _resolve_contact(contact: str) -> tuple[str | None, str, str, bool]:
     if not contact or contact.lower() in (
         "this", "this chat", "current", "current chat", "open chat", "here",
     ):
-        return "Contact not found", "", "", False
+        return (
+            "Specify a contact or group name (or phone number with country code).",
+            "",
+            "",
+            False,
+        )
+    if "@" in contact and (
+        contact.endswith("@s.whatsapp.net")
+        or contact.endswith("@g.us")
+        or contact.endswith("@lid")
+    ):
+        is_group = contact.endswith("@g.us")
+        label = _book_display(contact, contact.split("@")[0], is_group)
+        return None, contact, label, is_group
+
     kind = "group" if _looks_like_group_request(contact) else "any"
     resolved = bridge.resolve(contact, kind=kind)
-    if not resolved.get("ok") or resolved.get("status") != "FOUND" or resolved.get("source") != "whatsapp":
-        if resolved.get("status") == "AMBIGUOUS":
-            return "Multiple WhatsApp recipients match that name. Please provide the exact saved WhatsApp name or phone number.", "", "", False
-        bridge_error = _clean_connection_error(str(resolved.get("error") or ""))
-        if bridge_error.lower().startswith("whatsapp connection failed"):
-            return bridge_error, "", "", False
-        return "WhatsApp recipient not found. Please provide the correct saved WhatsApp name or a verified phone number.", "", "", False
+    if not resolved.get("ok") and kind == "group":
+        resolved = bridge.resolve(contact, kind="any")
+    if not resolved.get("ok"):
+        return str(resolved.get("error") or "Contact or group not found."), "", "", False
     jid = str(resolved["jid"])
     is_group = bool(resolved.get("isGroup")) or jid.endswith("@g.us")
-    label = str(resolved.get("display_name") or resolved.get("name") or contact)
+    label = _book_display(jid, str(resolved.get("name") or contact), is_group)
     return None, jid, label, is_group
-
-
-def expand_topic_roman_urdu(topic: str, contact: str = "") -> str:
-    """Expand a short task into a natural Roman Urdu message without inventing specifics."""
-    subject = (topic or "").strip().rstrip(".")
-    if not subject:
-        return "Assalam o Alaikum, umeed hai aap khairiyat se honge. Meherbani karke project update share kar dein. Shukriya."
-    lowered = subject.lower()
-    if "project" in lowered and "update" in lowered:
-        request = "project ki current progress, mukammal hone ka andaza, aur agar koi rukawat ho to us ke bare mein update"
-    elif "meeting" in lowered:
-        request = "meeting ke waqt aur agenda ki tasdeeq"
-    else:
-        request = subject
-    greeting = f"Assalam o Alaikum {contact}," if contact else "Assalam o Alaikum,"
-    return (
-        f"{greeting} umeed hai aap khairiyat se honge. Meherbani karke {request} share kar dein. "
-        "Aap ke jawab ka intezar rahega. Shukriya."
-    )
-
-
-def _send_via_whatsapp_desktop(contact: str, message: str) -> dict[str, Any]:
-    """Send text through the foreground WhatsApp Desktop UI, never claiming delivery on a UI error."""
-    try:
-        import pyautogui
-        import pyperclip
-    except ImportError as exc:
-        return {"ok": False, "error": f"WhatsApp Desktop automation dependency missing: {exc}"}
-
-    try:
-        import pygetwindow
-        windows = [w for w in pygetwindow.getAllWindows() if "whatsapp" in (w.title or "").lower()]
-        if not windows:
-            import webbrowser
-            webbrowser.open("whatsapp://")
-            deadline = time.monotonic() + 8.0
-            while time.monotonic() < deadline and not windows:
-                time.sleep(0.5)
-                windows = [w for w in pygetwindow.getAllWindows() if "whatsapp" in (w.title or "").lower()]
-        if not windows:
-            return {"ok": False, "error": "WhatsApp Desktop window was not found. Open WhatsApp Desktop and try again."}
-        window = windows[0]
-        if window.isMinimized:
-            window.restore()
-        window.activate()
-        time.sleep(0.8)
-        active = pygetwindow.getActiveWindow()
-        if active is None or "whatsapp" not in (active.title or "").lower():
-            return {"ok": False, "error": "Could not focus WhatsApp Desktop."}
-
-        pyautogui.hotkey("ctrl", "f")
-        time.sleep(0.3)
-        pyperclip.copy(contact)
-        pyautogui.hotkey("ctrl", "v")
-        pyautogui.press("enter")
-        time.sleep(1.0)
-        try:
-            from pywinauto import Desktop
-            labels = {
-                (control.window_text() or "").strip().casefold()
-                for window in Desktop(backend="uia").windows(title_re=".*WhatsApp.*")
-                for control in window.descendants()
-                if control.window_text()
-            }
-            if contact.strip().casefold() not in labels:
-                return {"ok": False, "error": "Contact not found. Please provide a manual number."}
-        except ImportError:
-            _log.warning("pywinauto is unavailable; using focused-window verification only")
-        except Exception as exc:
-            _log.exception("Could not verify WhatsApp contact chat for %s", contact)
-            return {"ok": False, "error": f"Could not verify the WhatsApp contact chat: {exc}"}
-        pyperclip.copy(message)
-        pyautogui.hotkey("ctrl", "v")
-        time.sleep(0.2)
-        pyautogui.press("enter")
-        time.sleep(0.8)
-        return {"ok": True, "sent": True, "messageId": f"desktop-{int(time.time() * 1000)}"}
-    except Exception as exc:
-        _log.exception("WhatsApp Desktop UI automation failed for %s", contact)
-        return {"ok": False, "error": f"WhatsApp Desktop automation failed: {exc}"}
 
 
 def compose(
@@ -410,17 +330,19 @@ def compose(
 ) -> str:
     global _pending
     message = (message or "").strip()
-    if not message and not path and not media and not voice:
-        return "Please specify a message topic."
     caption = (caption or "").strip() or message
     media = (media or "").strip().lower()
     voice = bool(voice)
 
+    err = _ensure_ready(player)
+    if err:
+        return err
+
     is_group = False
     if jid and "@" in jid:
-        resolve_err, resolved_jid, label, is_group = _resolve_contact(jid)
-        if resolve_err:
-            return resolve_err
+        resolved_jid = jid
+        is_group = jid.endswith("@g.us")
+        label = _book_display(jid, (contact or jid.split("@")[0]).strip() or jid, is_group)
     else:
         resolve_err, resolved_jid, label, is_group = _resolve_contact(contact)
         if resolve_err:
@@ -463,13 +385,8 @@ def compose(
         body = caption
     else:
         if not message:
-            return "Please specify a message topic."
+            return "Please specify the message text."
         body = message if send_now else with_signature(message)
-
-    if not (send_now and kind == "text"):
-        err = _ensure_ready(player)
-        if err:
-            return err
 
     target = f"group '{label}'" if is_group else label
     if send_now:
@@ -478,23 +395,20 @@ def compose(
             resolved_jid,
             body,
             media_path=media_path,
-            caption=caption,
+            caption=caption if kind != "text" else "",
             media_type="voice" if kind == "voice" else (kind if kind != "text" else ""),
             ptt=ptt,
         )
         _set_state("idle")
-        if not result.get("ok") or not result.get("sent") or not result.get("messageId"):
-            error = _clean_connection_error(str(result.get("error") or "The bridge did not confirm that WhatsApp sent the message."))
-            _log.error("WhatsApp immediate send failed for %s: %s", resolved_jid, error)
-            return f"WhatsApp send failed: {error}"
+        if not result.get("ok"):
+            return f"WhatsApp send failed: {result.get('error')}"
         sent_jid = str(result.get("jid") or resolved_jid)
         try:
             from actions import whatsapp_contacts_book as book
             book.remember_lid_mapping(lid=resolved_jid, phone_jid=sent_jid)
         except Exception:
             pass
-        if kind != "text":
-            bridge.cache_set(contact or label, resolved_jid, label)
+        bridge.cache_set(contact or label, resolved_jid, label)
         return f"Sent WhatsApp message to {target}."
 
     digits = _digits_for_jid(resolved_jid, is_group)
@@ -554,15 +468,6 @@ def send_pending(player=None) -> str:
         return "Pending draft was incomplete. Compose again."
 
     media_type = "voice" if kind == "voice" else (kind if kind != "text" else "")
-    resolve_err, verified_jid, verified_label, verified_group = _resolve_contact(jid)
-    if resolve_err:
-        return resolve_err
-    if verified_jid != jid:
-        clear_pending()
-        return "WhatsApp recipient verification changed. Please compose the message again."
-    jid = verified_jid
-    label = verified_label
-    is_group = verified_group
     result = bridge.send(
         jid,
         text,
@@ -571,10 +476,8 @@ def send_pending(player=None) -> str:
         media_type=media_type,
         ptt=bool(draft.get("ptt")),
     )
-    if not result.get("ok") or not result.get("sent") or not result.get("messageId"):
-        error = _clean_connection_error(str(result.get("error") or "The bridge did not confirm that WhatsApp sent the message."))
-        _log.error("WhatsApp pending send failed for %s: %s", jid, error)
-        return f"WhatsApp send failed: {error}"
+    if not result.get("ok"):
+        return f"WhatsApp send failed: {result.get('error')}"
     clear_pending()
     target = f"group '{label}'" if is_group else label
     if kind == "voice":
@@ -590,17 +493,9 @@ def send_pending(player=None) -> str:
 def send_auto_reply(contact: str, *, jid: str = "") -> str:
     if has_pending_compose():
         return "DEFER: pending user compose"
-    target_jid = (jid or "").strip()
-    if target_jid.endswith("@g.us"):
+    if (jid or "").endswith("@g.us"):
         return "SKIP: group chat (auto-reply disabled for groups)"
-    if not target_jid:
-        resolve_err, resolved_jid, _label, is_group = _resolve_contact(contact)
-        if resolve_err:
-            return str(resolve_err)
-        if is_group or str(resolved_jid).endswith("@g.us"):
-            return "SKIP: group chat (auto-reply disabled for groups)"
-        target_jid = resolved_jid
-    return compose(contact, auto_reply_text(), send_now=True, jid=target_jid)
+    return compose(contact, auto_reply_text(), send_now=True, jid=jid)
 
 
 def read_chat(contact: str, limit: int = 15, player=None) -> str:
@@ -671,10 +566,6 @@ def whatsapp_control(
         or params.get("text")
         or ""
     ).strip()
-    topic = str(params.get("topic") or params.get("subject") or "").strip()
-    if topic and not message:
-        message = expand_topic_roman_urdu(topic, contact)
-    auto_send = _as_bool(params.get("auto_send")) or bool(topic)
     path = str(params.get("path") or params.get("file") or params.get("media_path") or "").strip()
     caption = str(params.get("caption") or "").strip()
     media = str(params.get("media") or "").strip().lower()
@@ -747,22 +638,6 @@ def whatsapp_control(
             if not contact:
                 return "auto_reply needs a contact name."
             result = send_auto_reply(contact)
-        elif action in ("message", "send_topic", "agent_send"):
-            if not contact:
-                result = "Contact not found"
-            elif not message:
-                result = "Please specify a message topic."
-            else:
-                result = compose(
-                    contact,
-                    message,
-                    send_now=True,
-                    player=player,
-                    path=path,
-                    media=media,
-                    voice=voice,
-                    caption=caption,
-                )
         elif action == "send":
             if get_pending():
                 result = send_pending(player=player)
@@ -787,7 +662,7 @@ def whatsapp_control(
             result = compose(
                 contact,
                 message,
-                send_now=auto_send,
+                send_now=False,
                 player=player,
                 path=path,
                 media=media,

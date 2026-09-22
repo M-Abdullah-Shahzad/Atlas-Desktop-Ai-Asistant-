@@ -18,11 +18,6 @@ from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any
 
-try:
-    from thefuzz import fuzz, process
-except ImportError:  # Keep source checkable before optional dependencies install.
-    fuzz = process = None
-
 _THRESHOLD = 0.55
 _AMBIGUOUS_GAP = 0.08
 _DEFAULT_CC = "92"
@@ -127,17 +122,10 @@ def _norm_text(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
-def _lookup_text(s: str) -> str:
-    text = _norm_text(s)
-    text = re.sub(r"^(?:call|message|text|contact|whatsapp)\s+", "", text)
-    return re.sub(r"\s+", " ", text).strip()
-
-
 def normalize_phone(raw: str, country_code: str | None = None) -> str:
     """Return international digits (no +), or empty if unusable."""
-    cc_raw = country_code or _default_country_code()
-    cc = re.sub(r"\D", "", str(cc_raw)) or _DEFAULT_CC
-    s = str(raw or "").strip()
+    cc = country_code or _default_country_code()
+    s = (raw or "").strip()
     if not s:
         return ""
     if s.startswith("00"):
@@ -406,9 +394,8 @@ def _load_rows() -> list[dict[str, Any]]:
 
 
 def _pick_phone(phones: list[dict[str, Any]], cc: str) -> str:
-    valid_phones = [p for p in phones if isinstance(p, dict)]
-    preferred = [p for p in valid_phones if p.get("prefer")]
-    ordered = preferred + [p for p in valid_phones if not p.get("prefer")]
+    preferred = [p for p in phones if p.get("prefer")]
+    ordered = preferred + [p for p in phones if not p.get("prefer")]
     seen: set[str] = set()
     for p in ordered:
         digits = normalize_phone(str(p.get("raw") or ""), cc)
@@ -439,28 +426,6 @@ def _score(query: str, name: str) -> float:
     return SequenceMatcher(None, q, n).ratio()
 
 
-def _matches_query_tokens(query: str, candidate: str) -> bool:
-    q = _lookup_text(query)
-    c = _lookup_text(candidate)
-    if not q or not c:
-        return False
-    if q == c:
-        return True
-    q_terms = [t for t in q.split() if len(t) > 1]
-    c_terms = [t for t in c.split() if len(t) > 1]
-    if not q_terms or not c_terms:
-        return False
-    if len(q_terms) == 1:
-        return c.startswith(q) or q.startswith(c) or q in c
-    q_set = set(q_terms)
-    c_set = set(c_terms)
-    if q_terms[0] == c_terms[0] and q_terms[-1] == c_terms[-1]:
-        return True
-    if q_terms[-1] == c_terms[-1] and (q_set & c_set):
-        return True
-    return q_set <= c_set or c_set <= q_set
-
-
 def lookup(name: str) -> dict[str, Any] | None:
     """
     Match a spoken name against the Contacts folder.
@@ -483,90 +448,6 @@ def lookup(name: str) -> dict[str, Any] | None:
         return None
 
     cc = _default_country_code()
-    canonical_query = _lookup_text(query)
-
-    exact_rows: list[tuple[dict[str, Any], str]] = []
-    for row in rows:
-        names = row.get("aliases") or [row.get("name") or ""]
-        for candidate in names:
-            candidate_text = _lookup_text(str(candidate))
-            if not candidate_text:
-                continue
-            if candidate_text.lower() == canonical_query.lower():
-                phone = _pick_phone(row.get("phones") or [], cc)
-                if phone:
-                    exact_rows.append((row, phone))
-                break
-
-    if exact_rows:
-        unique_phones = {phone for _row, phone in exact_rows}
-        if len(unique_phones) == 1:
-            row, phone = exact_rows[0]
-            return {
-                "ok": True,
-                "jid": phone_to_jid(phone),
-                "name": str(row.get("name") or query),
-                "digits": phone,
-                "score": 1.0,
-                "source": "contacts_book",
-                "isGroup": False,
-            }
-        # Exact full-name matches should never be downgraded to fuzzy fallback.
-        labels = []
-        seen: set[str] = set()
-        for row, phone in exact_rows[:6]:
-            label = str(row.get("name") or phone)
-            tail = phone[-4:] if len(phone) >= 4 else phone
-            shown = f"{label} (...{tail})"
-            if shown.lower() in seen:
-                continue
-            seen.add(shown.lower())
-            labels.append(shown)
-        listing = ", ".join(labels)
-        return {
-            "ok": False,
-            "error": (
-                f"Multiple exact matches for '{query}': {listing}. "
-                "Please use the full saved name exactly as it appears in your contacts."
-            ),
-        }
-
-    if process is not None and fuzz is not None and canonical_query:
-        candidates: dict[str, tuple[dict[str, Any], str]] = {}
-        for row in rows:
-            phone = _pick_phone(row.get("phones") or [], cc)
-            if not phone:
-                continue
-            for alias in row.get("aliases") or [row.get("name") or ""]:
-                alias_text = _lookup_text(str(alias))
-                if not alias_text or alias_text.lower() == canonical_query.lower():
-                    continue
-                if len(canonical_query.split()) > 1 and not _matches_query_tokens(canonical_query, alias_text):
-                    continue
-                candidates.setdefault(alias_text, (row, phone))
-        if candidates:
-            match = process.extractOne(
-                canonical_query,
-                list(candidates),
-                scorer=fuzz.token_set_ratio,
-                score_cutoff=86,
-            )
-            if match:
-                if len(match) >= 3:
-                    matched_name, score, _index = match[:3]
-                else:
-                    matched_name, score = match[:2]
-                row, phone = candidates[matched_name]
-                return {
-                    "ok": True,
-                    "jid": phone_to_jid(phone),
-                    "name": str(row.get("name") or query),
-                    "digits": phone,
-                    "score": score / 100.0,
-                    "source": "contacts_book_fuzzy",
-                    "isGroup": False,
-                }
-
     scored: list[tuple[float, dict[str, Any], str]] = []
     for row in rows:
         best = 0.0
@@ -583,10 +464,7 @@ def lookup(name: str) -> dict[str, Any] | None:
         return None
 
     scored.sort(key=lambda t: t[0], reverse=True)
-    canonical_exact = [
-        s for s in scored if _lookup_text(str(s[1].get("name") or "")) == canonical_query
-    ]
-    exact = canonical_exact or [s for s in scored if s[0] >= 0.999]
+    exact = [s for s in scored if s[0] >= 0.999]
     if exact:
         pool = exact
     else:
@@ -722,8 +600,6 @@ def _rows_from_book() -> list[dict[str, Any]]:
         aliases = list(row.get("aliases") or [name])
         source = str(row.get("source") or "")
         for p in row.get("phones") or []:
-            if not isinstance(p, dict):
-                continue
             digits = normalize_phone(str(p.get("raw") or ""), cc)
             if not digits:
                 continue

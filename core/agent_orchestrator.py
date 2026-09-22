@@ -51,7 +51,7 @@ class AgentOrchestrator:
         return result
 
     def send_whatsapp_topic(self, contact: str, topic: str, player=None) -> str:
-        """Send a topic-generated Roman Urdu WhatsApp message through strict delivery checks."""
+        """Send a topic-generated WhatsApp message using the default English drafting rules."""
         from actions.whatsapp_control import whatsapp_control
 
         return whatsapp_control(

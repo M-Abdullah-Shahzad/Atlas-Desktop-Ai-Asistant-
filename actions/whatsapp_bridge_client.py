@@ -7,14 +7,12 @@ Spawns whatsapp_bridge/server.js on demand and talks HTTP on 127.0.0.1:8765.
 from __future__ import annotations
 
 import json
-import logging
 import os
 import shutil
 import subprocess
 import sys
 import threading
 import time
-import webbrowser
 from pathlib import Path
 from typing import Any
 
@@ -29,11 +27,9 @@ _START_TIMEOUT = 20.0
 _HTTP_TIMEOUT = 8.0
 
 _proc: subprocess.Popen | None = None
-_log_file = None
 _proc_lock = threading.Lock()
 _cache_lock = threading.Lock()
 _deps_lock = threading.Lock()
-_log = logging.getLogger(__name__)
 
 
 def _base_dir() -> Path:
@@ -54,12 +50,6 @@ def auth_dir() -> Path:
 
 def qr_path() -> Path:
     return auth_dir() / "qr.png"
-
-
-def bridge_log_path() -> Path:
-    path = _base_dir() / "logs" / "whatsapp_bridge.log"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    return path
 
 
 def contacts_cache_path() -> Path:
@@ -100,30 +90,6 @@ def _learn_ids(jid: str = "", lid: str = "", pn: str = "", display: str = "") ->
         cache_set(label or display, jid, label or display)
 
 
-def _cache_row_is_valid(name: str, row: dict[str, Any]) -> bool:
-    if not isinstance(row, dict):
-        return False
-    jid = str(row.get("jid") or "").strip()
-    if not jid or not jid.endswith(("@s.whatsapp.net", "@g.us", "@lid")):
-        return False
-
-    label = str(row.get("name") or "").strip()
-    name_key = _norm_key(name)
-    if not name_key or not label:
-        return False
-
-    label_key = _norm_key(label)
-    if not label_key:
-        return False
-    if name_key != label_key:
-        known = contacts_book.display_for_jid(jid, "")
-        known_key = _norm_key(known)
-        if not known_key or name_key != known_key:
-            return False
-
-    return True
-
-
 def cache_get(name: str) -> dict[str, str] | None:
     key = _norm_key(name)
     if not key:
@@ -134,30 +100,14 @@ def cache_get(name: str) -> dict[str, str] | None:
     try:
         with _cache_lock:
             data = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(data, dict):
-            return None
-
         row = data.get(key)
-        if isinstance(row, dict) and _cache_row_is_valid(name, row):
+        if isinstance(row, dict) and row.get("jid"):
             jid = str(row["jid"])
             raw_name = str(row.get("name") or name)
             return {
                 "jid": jid,
                 "name": _book_label(jid, raw_name, jid.endswith("@g.us")),
             }
-
-        # Ignore stale or phantom cache rows that don't match the requested name / JID.
-        for cached_key, cached_row in data.items():
-            if cached_key == key or not isinstance(cached_row, dict):
-                continue
-            if _cache_row_is_valid(name, cached_row):
-                jid = str(cached_row.get("jid") or "").strip()
-                if jid:
-                    raw_name = str(cached_row.get("name") or name)
-                    return {
-                        "jid": jid,
-                        "name": _book_label(jid, raw_name, jid.endswith("@g.us")),
-                    }
     except Exception:
         return None
     return None
@@ -213,14 +163,11 @@ def is_connected() -> bool:
 
 
 def _find_node() -> str | None:
-    """Find Node even when Atlas was started before PATH was refreshed."""
+    """Prefer a Node binary shipped next to the app, then PATH."""
     candidates = [
         _base_dir() / "tools" / "node" / "node.exe",
         _base_dir() / "tools" / "node" / "node",
         bridge_dir() / "node.exe",
-        Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "nodejs" / "node.exe",
-        Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) / "nodejs" / "node.exe",
-        Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "nodejs" / "node.exe",
     ]
     for p in candidates:
         if p.is_file():
@@ -310,7 +257,7 @@ def open_qr() -> str:
 
 def _spawn_bridge() -> str | None:
     """Start node server.js. Returns error string or None."""
-    global _proc, _log_file
+    global _proc
     bd = bridge_dir()
     server = bd / "server.js"
     if not server.exists():
@@ -321,10 +268,6 @@ def _spawn_bridge() -> str | None:
     node = _find_node()
     if not node:
         return "Node.js is not installed or not on PATH. Install Node 18+ to use WhatsApp."
-    try:
-        qr_path().unlink(missing_ok=True)
-    except Exception:
-        pass
     env = os.environ.copy()
     env["AUTH_DIR"] = str(auth_dir())
     env["WA_BRIDGE_PORT"] = str(BRIDGE_PORT)
@@ -334,13 +277,12 @@ def _spawn_bridge() -> str | None:
     if sys.platform == "win32":
         creationflags = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW  # type: ignore[attr-defined]
     try:
-        _log_file = bridge_log_path().open("a", encoding="utf-8", errors="replace")
         _proc = subprocess.Popen(
             [node, str(server)],
             cwd=str(bd),
             env=env,
-            stdout=_log_file,
-            stderr=subprocess.STDOUT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
             creationflags=creationflags,
         )
     except FileNotFoundError:
@@ -393,7 +335,7 @@ def ensure_bridge(timeout: float = _START_TIMEOUT) -> tuple[bool, str]:
 
 def stop_bridge() -> None:
     """Stop the local Node bridge so the next ensure_bridge() loads current server.js."""
-    global _proc, _log_file
+    global _proc
     with _proc_lock:
         if _proc is not None and _proc.poll() is None:
             try:
@@ -408,12 +350,6 @@ def stop_bridge() -> None:
                 except Exception:
                     pass
         _proc = None
-        if _log_file is not None:
-            try:
-                _log_file.close()
-            except Exception:
-                pass
-            _log_file = None
     try:
         import psutil
         for c in psutil.net_connections(kind="inet"):
@@ -471,7 +407,10 @@ def request_new_qr(timeout: float = 28.0) -> tuple[bool, str]:
 
 
 def resolve(name: str, *, kind: str = "any") -> dict[str, Any]:
-    """Resolve a recipient using only the currently connected WhatsApp account."""
+    """Resolve contact/group name → {ok, jid, name, isGroup}.
+
+    Order: JID/phone → Contacts/ folder (people) → JSON cache → Baileys.
+    """
     import re
 
     kind = (kind or "any").lower().strip()
@@ -480,6 +419,69 @@ def resolve(name: str, *, kind: str = "any") -> dict[str, Any]:
     raw = (name or "").strip()
     if not raw:
         return {"ok": False, "error": "name required"}
+
+    if "@" in raw and (
+        raw.endswith("@s.whatsapp.net")
+        or raw.endswith("@g.us")
+        or raw.endswith("@lid")
+    ):
+        is_group = raw.endswith("@g.us")
+        return {
+            "ok": True,
+            "jid": raw,
+            "name": _book_label(raw, raw.split("@")[0], is_group),
+            "cached": False,
+            "isGroup": is_group,
+        }
+
+    digits = re.sub(r"\D", "", raw)
+    if (
+        kind != "group"
+        and 8 <= len(digits) <= 15
+        and re.fullmatch(r"[\d\s+\-()]+", raw)
+    ):
+        norm = contacts_book.normalize_phone(raw)
+        jid = contacts_book.phone_to_jid(norm) if norm else f"{digits}@s.whatsapp.net"
+        display = _book_label(jid, norm or digits)
+        cache_set(raw, jid, display)
+        return {"ok": True, "jid": jid, "name": display, "cached": False, "isGroup": False}
+
+    # Local phone book (VCF/CSV) — people only, not groups
+    if kind != "group":
+        try:
+            hit = contacts_book.lookup(raw)
+        except Exception:
+            hit = None
+        if hit:
+            if not hit.get("ok"):
+                return {"ok": False, "error": str(hit.get("error") or "Ambiguous contact name.")}
+            jid = str(hit.get("jid") or "")
+            display = _book_label(jid, str(hit.get("name") or raw))
+            if jid:
+                cache_set(raw, jid, display)
+                return {
+                    "ok": True,
+                    "jid": jid,
+                    "name": display,
+                    "cached": False,
+                    "isGroup": False,
+                    "source": "contacts_book",
+                }
+
+        cached = cache_get(name)
+        if cached:
+            jid = str(cached.get("jid") or "")
+            if kind == "contact" and jid.endswith("@g.us"):
+                pass
+            else:
+                is_group = jid.endswith("@g.us")
+                return {
+                    "ok": True,
+                    "jid": jid,
+                    "name": _book_label(jid, str(cached.get("name") or name), is_group),
+                    "cached": True,
+                    "isGroup": is_group,
+                }
 
     ok, msg = ensure_bridge()
     if not ok:
@@ -497,24 +499,21 @@ def resolve(name: str, *, kind: str = "any") -> dict[str, Any]:
         }
 
     try:
-        request_name = raw
-        if kind != "group" and re.fullmatch(r"[+\d()\s-]{8,}", raw):
-            request_name = contacts_book.normalize_phone(raw) or raw
-        r = _http("POST", "/resolve", json={"name": request_name, "kind": kind})
+        r = _http("POST", "/resolve", json={"name": name, "kind": kind})
         data = r.json() if r.content else {}
         if not r.ok or not data.get("ok"):
-            status = str(data.get("status") or ("AMBIGUOUS" if getattr(r, "status_code", 0) == 409 else "NOT_FOUND"))
-            result = {"ok": False, "status": status, "type": data.get("type") or ("group" if kind == "group" else "contact"), "query": data.get("query") or raw, "error": data.get("error") or r.text or "resolve failed"}
-            if data.get("matches"):
-                result["matches"] = data["matches"]
-            return result
-        jid = str(data.get("jid") or "").strip()
-        if not jid or data.get("status") != "FOUND" or data.get("source") != "whatsapp":
-            return {"ok": False, "status": "NOT_FOUND", "type": data.get("type") or "contact", "query": raw, "error": "WhatsApp did not verify that recipient."}
+            return {"ok": False, "error": data.get("error") or r.text or "resolve failed"}
+        jid = str(data["jid"])
         is_group = bool(data.get("isGroup")) or jid.endswith("@g.us")
-        display = str(data.get("display_name") or data.get("name") or raw)
-        cache_set(raw, jid, display)
-        return {"ok": True, "status": "FOUND", "type": data.get("type") or ("group" if is_group else "contact"), "jid": jid, "name": display, "display_name": display, "source": "whatsapp", "isGroup": is_group}
+        display = _book_label(jid, str(data.get("name") or name), is_group)
+        cache_set(name, jid, display)
+        return {
+            "ok": True,
+            "jid": jid,
+            "name": display,
+            "cached": False,
+            "isGroup": is_group,
+        }
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
@@ -552,73 +551,10 @@ def send(
         r = _http("POST", "/send", json=payload, timeout=timeout)
         data = r.json() if r.content else {}
         if not r.ok or not data.get("ok"):
-            error = data.get("error") or r.text or "send failed"
-            _log.error("WhatsApp bridge send failed for %s: %s", jid, error)
-            return {"ok": False, "sent": False, "error": error, "state": data.get("state")}
-        message_id = str(data.get("messageId") or "").strip()
-        if not data.get("sent") or not message_id:
-            error = "WhatsApp bridge returned success without confirming the outgoing message."
-            _log.error("%s jid=%s response=%r", error, jid, data)
-            return {"ok": False, "sent": False, "error": error}
-        return {"ok": True, "sent": True, "messageId": message_id, "jid": str(data.get("jid") or jid)}
+            return {"ok": False, "error": data.get("error") or r.text or "send failed"}
+        return {"ok": True, "jid": jid}
     except Exception as e:
-        _log.exception("WhatsApp bridge send request failed for %s", jid)
         return {"ok": False, "error": str(e)}
-
-
-def _rpa_whatsapp_call(jid: str, *, call_type: str) -> dict[str, Any]:
-    """Fallback for Baileys builds that cannot create outgoing calls."""
-    try:
-        from actions import whatsapp_contacts_book as book
-        phone = book.jid_to_digits(jid) or book.phone_for_lid(jid)
-    except Exception:
-        phone = ""
-    if not phone:
-        return {"ok": False, "error": "Could not derive a phone number for the contact."}
-    try:
-        import pyautogui
-    except ImportError:
-        return {"ok": False, "error": "PyAutoGUI is required for automatic WhatsApp calling."}
-
-    uri = f"whatsapp://send?phone={phone}"
-    if not webbrowser.open(uri):
-        return {"ok": False, "error": "Could not open WhatsApp Desktop."}
-    time.sleep(5.0)
-    try:
-        # WhatsApp Desktop's call shortcut is the primary RPA path. The
-        # contact is already selected by the whatsapp:// URI.
-        if call_type == "video":
-            pyautogui.hotkey("ctrl", "shift", "a")
-        else:
-            pyautogui.hotkey("ctrl", "shift", "a")
-        return {"ok": True, "mode": "desktop_rpa", "jid": jid, "phone": phone}
-    except Exception as exc:
-        return {"ok": False, "error": f"WhatsApp RPA call failed: {exc}"}
-
-
-def initiate_whatsapp_call(contact_name: str, *, call_type: str = "audio") -> dict[str, Any]:
-    """Start an audio/video call, falling back to automated WhatsApp Desktop RPA."""
-    kind = (call_type or "audio").strip().lower()
-    if kind not in ("audio", "video"):
-        return {"ok": False, "error": "call_type must be audio or video"}
-    resolved = resolve(contact_name, kind="contact")
-    if not resolved.get("ok"):
-        return {"ok": False, "error": resolved.get("error") or "Contact not found"}
-    try:
-        response = _http(
-            "POST",
-            "/call",
-            json={"jid": resolved["jid"], "type": kind},
-            timeout=20.0,
-        )
-        data = response.json() if response.content else {}
-        if not response.ok or not data.get("ok"):
-            if response.status_code in (404, 501) or "outgoing call" in str(data.get("error") or "").lower():
-                return _rpa_whatsapp_call(str(resolved["jid"]), call_type=kind)
-            return {"ok": False, "error": data.get("error") or response.text or "call failed"}
-        return {**data, "contact": resolved.get("name") or contact_name}
-    except Exception as exc:
-        return {"ok": False, "error": str(exc)}
 
 
 def chat_messages(jid: str, limit: int = 15) -> dict[str, Any]:

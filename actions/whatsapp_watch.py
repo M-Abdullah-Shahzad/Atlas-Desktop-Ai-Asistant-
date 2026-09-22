@@ -72,9 +72,7 @@ def _config_path() -> Path:
 
 def _user_name() -> str:
     try:
-        from memory.config_manager import load_api_keys
-
-        data = load_api_keys()
+        data = json.loads(_config_path().read_text(encoding="utf-8"))
         return str(data.get("user_name") or "").strip()
     except Exception:
         return ""
@@ -115,9 +113,7 @@ def is_auto_reply_enabled() -> bool:
         if _enabled_cache is not None:
             return _enabled_cache
     try:
-        from memory.config_manager import load_api_keys
-
-        data = load_api_keys()
+        data = json.loads(_config_path().read_text(encoding="utf-8"))
         val = data.get("whatsapp_auto_reply", False)
         enabled = bool(val) if not isinstance(val, str) else val.lower() in (
             "1", "true", "yes", "on"
@@ -186,9 +182,9 @@ def set_auto_reply_enabled(enabled: bool) -> str:
     global _enabled_cache
     path = _config_path()
     try:
-        from memory.config_manager import load_api_keys
-
-        data: dict[str, Any] = load_api_keys()
+        data: dict[str, Any] = {}
+        if path.exists():
+            data = json.loads(path.read_text(encoding="utf-8"))
         data["whatsapp_auto_reply"] = bool(enabled)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data, indent=4), encoding="utf-8")

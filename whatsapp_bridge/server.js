@@ -115,15 +115,6 @@ function extractText(msg) {
   return "";
 }
 
-function normalizeName(value) {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFKC")
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function scoreName(query, candidate) {
   const a = String(query || "")
     .toLowerCase()
@@ -489,22 +480,6 @@ async function refreshGroups() {
   }
 }
 
-async function verifyRecipient(jid, expectedType = "any") {
-  const raw = String(jid || "").trim();
-  if (!raw) return null;
-  const isGroup = raw.endsWith("@g.us");
-  if (expectedType === "group" && !isGroup) return null;
-  if (expectedType === "contact" && isGroup) return null;
-  if (isGroup) {
-    await refreshGroups();
-    return nameIndex.has(raw) ? sendJid(raw) : null;
-  }
-  const normalized = jidNormalizedUser(raw);
-  const availability = await sock.onWhatsApp(normalized);
-  const verified = (availability || []).find((item) => item?.exists && item?.jid);
-  return verified?.jid ? sendJid(verified.jid) : null;
-}
-
 async function writeQrPng(qr) {
   lastQrAt = Date.now();
   const buf = await QRCode.toBuffer(qr, { width: 360, margin: 2, type: "png" });
@@ -808,40 +783,24 @@ app.post("/resolve", async (req, res) => {
     return;
   }
 
-  try {
-    if (name.endsWith("@g.us") || name.endsWith("@s.whatsapp.net") || name.endsWith("@lid")) {
-      const isGroup = name.endsWith("@g.us");
-      if (kind === "group" && !isGroup) {
-        res.status(404).json({ ok: false, status: "NOT_FOUND", type: "group", query: name });
-        return;
-      }
-      if (kind === "contact" && isGroup) {
-        res.status(404).json({ ok: false, status: "NOT_FOUND", type: "contact", query: name });
-        return;
-      }
-      if (isGroup) {
-        await refreshGroups();
-        if (!nameIndex.has(name)) {
-          res.status(404).json({ ok: false, status: "NOT_FOUND", type: "group", query: name });
-          return;
-        }
-        const display = nameIndex.get(name);
-        res.json({ ok: true, status: "FOUND", type: "group", jid: sendJid(name), display_name: display, name: display, source: "whatsapp", isGroup: true });
-        return;
-      }
-      const normalized = jidNormalizedUser(name);
-      const availability = await sock.onWhatsApp(normalized);
-      const verified = (availability || []).find((item) => item?.exists && item?.jid);
-      if (!verified) {
-        res.status(404).json({ ok: false, status: "NOT_FOUND", type: "contact", query: name });
-        return;
-      }
-      const jid = sendJid(verified.jid);
-      const display = lookupName(jid, name.split("@")[0]);
-      res.json({ ok: true, status: "FOUND", type: "contact", jid, display_name: display, name: display, source: "whatsapp", isGroup: false });
-      return;
-    }
+  const digits = name.replace(/\D/g, "");
+  if (
+    kind !== "group" &&
+    digits.length >= 8 &&
+    digits.length <= 15 &&
+    /^[\d\s+\-()]+$/.test(name.trim())
+  ) {
+    const jid = jidNormalizedUser(`${digits}@s.whatsapp.net`);
+    res.json({
+      ok: true,
+      jid,
+      name: lookupName(jid, digits),
+      isGroup: false,
+    });
+    return;
+  }
 
+  try {
     const wantsGroup =
       kind === "group" || /\bgroup\b/i.test(name) || name.trim().endsWith(" group");
     if (wantsGroup || kind === "any") {
@@ -857,9 +816,10 @@ app.post("/resolve", async (req, res) => {
       });
     }
 
+    let best = null;
+    let bestScore = 0;
     const seen = new Set();
-    const query = normalizeName(name.replace(/\bgroup\b/gi, " "));
-    const matches = [];
+    const query = name.replace(/\bgroup\b/gi, " ").replace(/\s+/g, " ").trim();
 
     for (const row of candidates) {
       if (!row.jid || seen.has(row.jid)) continue;
@@ -867,52 +827,33 @@ app.post("/resolve", async (req, res) => {
       if (kind === "group" && !row.isGroup) continue;
       if (kind === "contact" && row.isGroup) continue;
 
-      if (normalizeName(row.name) !== query) continue;
-      matches.push(row);
+      let sc = Math.max(scoreName(name, row.name), scoreName(query, row.name));
+      if (wantsGroup && row.isGroup) sc += 0.15;
+      if (!wantsGroup && kind === "any" && !row.isGroup) sc += 0.05;
+
+      if (sc > bestScore) {
+        bestScore = sc;
+        best = row;
+      }
     }
 
-    if (!matches.length) {
-      const digits = name.replace(/\D/g, "");
-      if (
-        kind !== "group" &&
-        digits.length >= 8 &&
-        digits.length <= 15 &&
-        /^[\d\s+\-()]+$/.test(name.trim())
-      ) {
-        const normalized = jidNormalizedUser(`${digits}@s.whatsapp.net`);
-        const availability = await sock.onWhatsApp(normalized);
-        const verified = (availability || []).find((item) => item?.exists && item?.jid);
-        if (verified) {
-          const jid = sendJid(verified.jid);
-          res.json({ ok: true, status: "FOUND", type: "contact", jid, display_name: lookupName(jid, digits), name: lookupName(jid, digits), source: "whatsapp", isGroup: false });
-          return;
-        }
-      }
+    if (!best || bestScore < 0.35) {
       res.status(404).json({
         ok: false,
-        status: "NOT_FOUND",
-        type: wantsGroup ? "group" : "contact",
-        query: name,
         error: wantsGroup
           ? `No WhatsApp group matched '${name}'. Check the exact group name.`
-          : `No WhatsApp contact or group matched '${name}'. Use the saved WhatsApp name or a verified phone number.`,
+          : `No WhatsApp contact or group matched '${name}'. Try the full name, group name, or phone number with country code.`,
       });
       return;
     }
 
-    if (matches.length > 1) {
-      res.status(409).json({
-        ok: false,
-        status: "AMBIGUOUS",
-        type: matches[0].isGroup ? "group" : "contact",
-        query: name,
-        matches: matches.map((row) => ({ jid: sendJid(row.jid), display_name: row.name, name: row.name, source: "whatsapp", isGroup: row.isGroup })),
-      });
-      return;
-    }
-
-    const match = matches[0];
-    res.json({ ok: true, status: "FOUND", type: match.isGroup ? "group" : "contact", jid: sendJid(match.jid), display_name: match.name, name: match.name, source: "whatsapp", isGroup: !!match.isGroup });
+    res.json({
+      ok: true,
+      jid: sendJid(best.jid),
+      name: best.name,
+      score: bestScore,
+      isGroup: !!best.isGroup,
+    });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
@@ -932,11 +873,6 @@ app.post("/send", async (req, res) => {
   }
   try {
     const dest = sendJid(jid);
-    const verified = await verifyRecipient(dest, dest.endsWith("@g.us") ? "group" : "contact");
-    if (!verified || verified !== dest) {
-      res.status(403).json({ ok: false, sent: false, error: "WhatsApp recipient was not verified by the connected account." });
-      return;
-    }
     let content;
     let storedText = text;
     if (mediaPath) {
@@ -976,16 +912,10 @@ app.post("/send", async (req, res) => {
     } else {
       content = { text };
     }
-    const sentMessage = await sock.sendMessage(dest, content);
-    const messageId = String(sentMessage?.key?.id || "").trim();
-    if (!messageId) {
-      log.error({ jid: dest, mediaPath: Boolean(mediaPath) }, "WhatsApp send returned without a message id");
-      res.status(502).json({ ok: false, sent: false, error: "WhatsApp did not confirm an outgoing message id." });
-      return;
-    }
+    await sock.sendMessage(dest, content);
     const ts = Math.floor(Date.now() / 1000);
     storeChatMessage(dest, {
-      id: messageId,
+      id: `out-${ts}`,
       jid: dest,
       name: "You",
       text: storedText,
@@ -994,37 +924,7 @@ app.post("/send", async (req, res) => {
       ts,
     });
     touchChat(dest, { preview: storedText, lastTs: ts });
-    res.json({ ok: true, jid: dest, sent: true, messageId, isGroup: String(dest).endsWith("@g.us") });
-  } catch (e) {
-    log.error({ err: e, jid, mediaPath: Boolean(mediaPath) }, "WhatsApp send failed");
-    res.status(500).json({ ok: false, error: e.message });
-  }
-});
-
-app.post("/call", async (req, res) => {
-  if (!requireConnected(res)) return;
-  const jid = String(req.body?.jid || "").trim();
-  const type = String(req.body?.type || "audio").toLowerCase();
-  if (!jid || !["audio", "video"].includes(type)) {
-    res.status(400).json({ ok: false, error: "jid and type=audio|video are required" });
-    return;
-  }
-  if (!sock || typeof sock.offer !== "function") {
-    res.status(501).json({
-      ok: false,
-      error: "This installed Baileys version does not expose outgoing call initiation."
-    });
-    return;
-  }
-  try {
-    const dest = sendJid(jid);
-    const verified = await verifyRecipient(dest, "contact");
-    if (!verified || verified !== dest) {
-      res.status(403).json({ ok: false, error: "WhatsApp call recipient was not verified by the connected account." });
-      return;
-    }
-    await sock.offer(dest, { video: type === "video" });
-    res.json({ ok: true, jid: dest, type });
+    res.json({ ok: true, jid: dest, sent: true, isGroup: String(dest).endsWith("@g.us") });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
