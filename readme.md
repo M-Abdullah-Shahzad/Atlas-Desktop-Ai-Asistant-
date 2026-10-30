@@ -1,62 +1,251 @@
-# Atlas
+# ATLAS — AI Desktop Assistant
 
-Windows voice assistant built on **Gemini Live** (native audio). A PyQt6 HUD listens, talks, and runs tools on this machine.
+ATLAS is a personal AI desktop assistant designed to help you interact with your computer through natural voice conversations and practical tools. Instead of being limited to a chat window, ATLAS can understand requests, work with files, interact with desktop applications, search the web, and connect with supported services.
 
-The **trading desk** (auto-trade, MT5 executor, trading HUD) lives in a separate repo and is outside Atlas.
+The assistant uses **Gemini Live** for real-time voice interaction and provides a **PyQt6 desktop HUD** for voice, typed commands, activity, and results.
 
-This repo is the **personal assistant only** — read-only MT5 analysis, no auto-trading.
+> ATLAS is actively developed. Available features depend on your operating system, installed applications, API credentials, and integration setup.
 
-```bash
-pip install -r requirements.txt
-python main.py
-```
+## What ATLAS can do
 
----
+### Voice assistant and conversation
+
+- Real-time voice conversations using Gemini Live.
+- Typed commands through the desktop interface.
+- Natural spoken responses with input and output transcription.
+- English as the default response language, with explicit language switching.
+- Configurable assistant and user names.
+- Voice interruption, mute, and response controls.
+- Automatic reconnection for supported transient network and service failures.
+- Session summaries and learned corrections.
+
+### Desktop interface
+
+- Animated PyQt6 HUD with listening, thinking, speaking, sleeping, and error states.
+- Activity log and a content panel for search results, code, tables, news, and file output.
+- Drag-and-drop file input.
+- Camera preview and live camera view.
+- Clipboard panel for copied content.
+- Fullscreen and system-tray modes.
+- Desktop shortcut creation on supported operating systems.
+- Optional morning briefing and configurable content-panel visibility.
+
+### Screen understanding and vision
+
+- Capture and analyze the current desktop screen.
+- Capture and analyze webcam frames.
+- Keep a live camera preview open while needed.
+- Start and stop user-consented live screen sharing.
+- Share screen images during an active conversation when requested.
+- Protection against repeated or overlapping vision requests.
+
+Screen sharing sends visual captures; it does not share computer audio.
+
+### Computer control
+
+ATLAS can perform supported desktop actions, including:
+
+- Open applications and manage windows.
+- Adjust volume and brightness.
+- Access Wi-Fi and supported system settings.
+- Manage browser tabs, zoom, refresh, scrolling, and keyboard shortcuts.
+- Type text, click, double-click, right-click, move the mouse, and use copy/paste.
+- Find and interact with visible screen elements.
+- Capture screenshots.
+- Browse File Explorer.
+- Run CMD and PowerShell commands, including optional administrator execution.
+- Lock, sleep, restart, or shut down the computer through confirmation-gated actions.
+
+The available controls depend on the operating system and installed applications.
+
+### File management
+
+- List, open, read, create, and edit files.
+- Rename, move, copy, paste, and delete files.
+- Create folders and search for files.
+- Inspect disk usage and find large files.
+- Organize desktop files.
+- Work with paths across available drives.
+- Process files dropped into or uploaded through the interface.
+
+### File and document processing
+
+ATLAS provides supported workflows for common file types:
+
+| File type | Available workflows |
+|---|---|
+| Images | Describe, OCR, resize, compress, convert, and inspect metadata |
+| PDF | Summarize, extract text, inspect, and convert to Word |
+| Word and text | Summarize, reformat, count words, and organize content |
+| CSV and Excel | Analyze, calculate statistics, filter, sort, and convert |
+| JSON and XML | Validate, format, analyze, and convert JSON to CSV |
+| Source code | Explain, review, fix, optimize, run, document, and test |
+| Audio | Transcribe, trim, convert, and inspect |
+| Video | Trim, extract audio or frames, compress, transcribe, and convert |
+| Archives | List and extract contents |
+| Presentations | Summarize, extract text, and analyze |
+
+The exact operations available depend on installed tools and the input file.
+
+### Data viewer
+
+- Display CSV, TSV, JSON, JSONL, Parquet, and Excel data as tables.
+- Limit visible rows and columns.
+- Inspect the first or last rows.
+- Navigate large datasets with row offsets.
+- Select columns and sort values.
+- Show tabular results in the desktop content panel.
+
+### Web search and browser control
+
+- Search the web for general information, news, research, prices, and comparisons.
+- Use supported search engines, including Google, Bing, DuckDuckGo, and Yandex.
+- Open URLs in supported browsers.
+- Navigate backward and forward, reload pages, and open tabs.
+- Click elements, enter text, fill forms, and scroll pages.
+- Extract visible page text, read the current URL, and capture browser screenshots.
+- Work with supported installations of Chrome, Edge, Firefox, Opera, Opera GX, Brave, Vivaldi, and Safari where available.
+
+Browser automation depends on the installed browser and its available automation support.
+
+### Connected services
+
+**WhatsApp**
+- Connect through a local Baileys bridge and QR-based device linking.
+- Resolve contacts and groups, including phone-number lookup.
+- Compose messages before sending.
+- Send text, media, documents, screenshots, and voice notes.
+- Read chat history and check unread chats.
+- Support incoming-message monitoring and configurable direct-message auto-replies.
+- Import contacts from VCF and Google CSV files.
+
+WhatsApp setup from source requires Node.js 18+ and the packages listed in `whatsapp_bridge/package.json`.
+
+**Gmail**
+- Compose and send messages through the Gmail API after Google OAuth setup.
+- Review a draft before sending or cancel the send workflow.
+
+**Spotify**
+- Play tracks, artists, playlists, and liked songs.
+- Pause, resume, skip, and control shuffle and repeat.
+- Requires Spotify Desktop and Web API authorization. Playback may require a Spotify Premium account.
+
+**YouTube**
+- Search for and play videos.
+- Retrieve video information and summarize supported video content.
+- View trending videos by region.
+- Save summaries to Notepad when requested.
+
+### Everyday utilities
+
+- Weather reports by city.
+- Flight searches with route and trip details.
+- Timed reminders through Windows Task Scheduler.
+- Steam and Epic Games installation, update, status, and scheduling controls.
+- Optional computer shutdown after a game update completes.
+- Wallpaper controls and desktop cleanup, organization, and statistics.
+
+### System monitoring and proactive assistance
+
+- Monitor CPU, RAM, GPU, temperature, battery, disk, network, uptime, and processes.
+- Report high-resource processes and watch selected processes.
+- Provide configurable proactive check-ins.
+- Monitor user-configured news topics and deliver supported alerts.
+- Send background WhatsApp alerts when configured.
+- Learn local application routines and tool outcomes, with controls to inspect or forget learned habits.
+
+### Memory and personalization
+
+- Maintain persistent context for preferences, projects, notes, and routines.
+- Update memory when the user explicitly shares relevant information.
+- Create session summaries and record corrections.
+- Keep response-language state during a session.
+- Use relevant context in startup greetings and briefings.
+
+### Phone dashboard and remote controls
+
+- Run a local web dashboard using FastAPI and Uvicorn.
+- Relay phone microphone input to the active voice session and return assistant audio.
+- Send remote text commands.
+- Approve or deny permission requests remotely.
+- Control mute, interruption, sleep, wake, and supported settings.
+- Upload files and receive live status, log, content, and permission events over WebSockets.
+- Connect through QR or manual connection details, with local HTTPS and remote-connection configuration support.
+
+### MetaTrader 5 market analysis
+
+When a MetaTrader 5 terminal is available, ATLAS can:
+
+- Check connection status.
+- Retrieve supported symbol quotes, including bid, ask, and spread.
+- Analyze supported symbols and timeframes using technical indicators.
+- Provide a BUY, SELL, or WAIT bias as analysis, not as an instruction to trade.
+- Retrieve economic-calendar and relevant news context.
+- Capture and analyze chart snapshots.
+- Monitor the connection and record structured connection events.
+
+**The MetaTrader 5 integration is read-only. ATLAS does not place trades, submit orders, or manage trading positions.**
+
+## Permissions and safety
+
+ATLAS uses risk levels to manage tool execution:
+
+- **Low risk:** may run automatically when the configured policy allows it.
+- **Medium and high risk:** require confirmation through supported voice, typed, or remote controls.
+- **Critical actions:** may be blocked by policy.
+- Computer sleep, restart, and shutdown actions use confirmation.
+
+You can approve or cancel supported actions using the confirmation controls. Avoid granting permissions to actions you do not understand.
 
 ## Requirements
 
-- Windows 10/11 (MetaTrader tools and several OS actions are Windows-only)
-- Python 3.11 or 3.12
-- Microphone (voice)
-- [Gemini API key](https://aistudio.google.com/apikey)
-- Optional: MetaTrader 5 for read-only chart analysis
+For the full feature set, use:
 
-On first run, the HUD asks for the Gemini key and writes `config/api_keys.json` (gitignored).
+- Windows 10 or Windows 11.
+- Python 3.11 or 3.12.
+- A working microphone for voice interaction.
+- Internet access for Gemini Live and online integrations.
+- A Gemini API key.
 
----
+Additional requirements are integration-specific:
 
-## Run
+- **WhatsApp:** Node.js 18+ when running from source.
+- **MetaTrader 5:** an installed and configured MetaTrader 5 terminal.
+- **Gmail:** Google OAuth credentials and API setup.
+- **Spotify:** Spotify Desktop and Web API authorization.
+- **Remote dashboard:** network access and the required local or remote connection configuration.
 
-Defaults to **English**. Switch language only if you explicitly ask; a new process always starts in English.
+Some operating-system actions are Windows-specific. Other platform support depends on the relevant application and integration.
 
-Sleep hides the HUD to the tray (wake word or tray icon). Shutdown quits Athena, not the PC.
+## Getting started
 
-### Capabilities
+1. Install Python 3.11 or 3.12.
+2. Clone this repository and open a terminal in the project directory.
+3. Install the Python dependencies:
 
-- Real-time voice + typed commands
-- Screen / camera vision (`screen_process`); live screen share when you ask
-- Launch apps, volume, brightness, Wi‑Fi, windows, Explorer, shell (permission-gated)
-- Files: list/open/read/write, dropped-file analysis, DataFrame viewer
-- Web search (`search` / `news` / `research` / `price` / `compare`)
-- WhatsApp (local Baileys bridge), Gmail API, Spotify Desktop, YouTube
-- Weather, flights, reminders, Steam/Epic game updates
-- Persistent memory, session summaries, optional morning briefing
-- Hardware alerts (CPU / RAM / GPU / temp)
-- Topic news monitor (crypto/finance topics are blocked)
-- Phone dashboard (QR / local HTTPS)
-- Read-only **MetaTrader 5** quotes, TA (BIAS BUY/SELL/WAIT), calendar/news, chart snapshot — **never places orders**
+   ```bash
+   python -m pip install -r requirements.txt
+   ```
 
-Risky tools ask once (HUD + voice: “go ahead” / “abort”). Low-risk tools auto-run.
+4. Start ATLAS:
 
----
+   ```bash
+   python main.py
+   ```
 
-## Optional integrations
+5. On the first run, use the setup prompt in the desktop interface to provide your Gemini API key.
+
+The application stores the key in `config/api_keys.json`. Keep this file private and do not commit it to source control.
+
+## Optional integration setup
 
 ### WhatsApp
 
-**Settings → WhatsApp Setup.** Scan the QR (WhatsApp → Linked Devices). Import `Contacts.vcf` or a Google CSV so spoken names resolve.
+1. Open **Settings → WhatsApp Setup** in ATLAS.
+2. Scan the QR code using WhatsApp's **Linked Devices** option.
+3. Import contacts when you want spoken contact names to resolve more reliably.
 
-From source you also need Node 18+:
+When setting up the bridge manually from source:
 
 ```bash
 cd whatsapp_bridge
@@ -64,54 +253,54 @@ npm install
 npm start
 ```
 
-Atlas can spawn the bridge itself. Session files live in `memory/whatsapp_baileys/` (gitignored). Details: `whatsapp_bridge/README.md`.
+ATLAS can also start the local bridge itself when the required dependencies are available.
 
 ### Gmail
 
-Enable Gmail API, put desktop OAuth client id/secret in `config/api_keys.json`, then:
+Configure the Gmail API and Google OAuth credentials, then run the login flow:
 
 ```bash
 python actions/gmail_bridge_client.py --login
 ```
 
-See `actions/GMAIL_SETUP.md`.
-
 ### Spotify
 
-Desktop app + browser login when Athena reports `AUTH_REQUIRED` (or `python actions/spotify_control.py --login`).
+Install and sign in to Spotify Desktop, then complete the Web API authorization when prompted. The login helper is also available:
 
-### MT5 logs (read-only analysis)
+```bash
+python actions/spotify_control.py --login
+```
 
-| File | Contents |
-|---|---|
-| `logs/athena.log` | Assistant |
-| `logs/mt5/connection.log` | MT5 IPC connect / drop / reconnect |
-| `logs/mt5/events.jsonl` | Structured MT5 connection events |
+Other integrations can be configured from their relevant settings and setup screens.
+
+## Project structure
+
+```text
+.
+├── main.py                 # Assistant runtime and tool routing
+├── ui.py                   # PyQt6 desktop HUD
+├── core/                   # Prompts, permissions, and shared logic
+├── actions/                # Desktop, file, web, and service integrations
+├── config/                 # Local configuration and API key settings
+├── dashboard/              # Phone and remote dashboard
+├── whatsapp_bridge/        # Local WhatsApp bridge
+├── memory/                 # Local memory and session data
+├── tests/                  # Project tests
+├── requirements.txt        # Python dependencies
+└── setup.py                # Package setup
+```
+
+## Limitations and privacy notes
+
+- Gemini Live and most online integrations require an internet connection.
+- Feature availability depends on API access, credentials, installed applications, and operating-system support.
+- WhatsApp requires a valid linked-device session.
+- Gmail requires Google OAuth configuration.
+- Spotify playback depends on account access and authorization.
+- Browser and vision features depend on available browser automation and successful screen or camera capture.
+- MetaTrader 5 support is limited to analysis and connection monitoring; it does not execute trades.
+- API keys, OAuth tokens, linked-device sessions, and personal memory files are sensitive local data. Keep them private and out of public commits.
 
 ---
 
-## Layout
-
-```
-main.py                 # Assistant — Gemini Live, full tool surface
-ui.py                   # PyQt6 HUD
-core/prompt.txt         # Assistant persona + routing
-core/permissions.py     # Risk levels / voice confirmation
-core/logger.py          # logs/athena.log
-actions/                # Tools (WhatsApp, files, MT5 analysis, …)
-config/api_keys.json    # Gemini key (create on first run)
-dashboard/              # Phone / web remote
-whatsapp_bridge/        # Local Baileys server
-memory/                 # Long-term memory, OAuth (gitignored secrets)
-```
-
----
-
-## Troubleshooting
-
-| Symptom | Check |
-|---|---|
-| No voice | Mic, API key, Gemini Live model in Settings |
-| MT5 “could not connect” | Terminal open, logged in, Market Watch has the symbol |
-| Assistant will not buy/sell | Expected — use **Athena_Trading_v1** for auto-trade |
-| WhatsApp not linked | Settings → WhatsApp Setup, scan QR, import contacts |
+ATLAS is a work in progress. Features and integrations may change as development continues.
