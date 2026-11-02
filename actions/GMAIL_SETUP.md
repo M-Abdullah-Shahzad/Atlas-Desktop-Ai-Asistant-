@@ -1,4 +1,4 @@
-# Gmail API bridge (Athena)
+# Gmail API bridge (Atlas)
 
 Gmail compose/send uses the official Gmail API (no browser GUI).
 
@@ -26,7 +26,7 @@ Gmail compose/send uses the official Gmail API (no browser GUI).
 }
 ```
 
-## Link Athena
+## Link Atlas
 
 ```bash
 python actions/gmail_bridge_client.py --login
@@ -34,7 +34,7 @@ python actions/gmail_bridge_client.py --login
 
 A browser opens → sign in → allow send access. Tokens are stored in `memory/gmail_oauth/` (gitignored).
 
-The Vacation Responder also requires the `gmail.settings.basic` permission. If Athena reports
+The Vacation Responder also requires the `gmail.settings.basic` permission. If Atlas reports
 that this permission is missing after upgrading, run the login command again and approve the
 updated consent screen.
 

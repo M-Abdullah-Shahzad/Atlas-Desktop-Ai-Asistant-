@@ -390,7 +390,7 @@ def ensure_algo_trading() -> tuple[bool, str]:
         reason="AutoTrading disabled by client (10027)",
     )
     return False, (
-        "MT5 AutoTrading is OFF — Athena cannot place orders (10027). "
+        "MT5 AutoTrading is OFF — Atlas cannot place orders (10027). "
         "In MetaTrader 5 click the AutoTrading button on the top toolbar "
         "until it is green / enabled. Tools → Options → Expert Advisors "
         "must also allow algorithmic trading."

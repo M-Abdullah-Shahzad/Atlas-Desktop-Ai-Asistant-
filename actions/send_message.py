@@ -60,9 +60,9 @@ def _get_os() -> str:
 def _assistant_name() -> str:
     try:
         from memory.config_manager import get_assistant_name
-        return get_assistant_name() or "Athena"
+        return get_assistant_name() or "Atlas"
     except Exception:
-        return "Athena"
+        return "Atlas"
 
 
 def _user_name() -> str:
@@ -73,7 +73,7 @@ def _user_name() -> str:
         return "Usaid"
 
 
-def with_athena_signature(text: str) -> str:
+def with_atlas_signature(text: str) -> str:
     """Append 'Composed by {assistant}' footer to user-initiated messages."""
     body = (text or "").rstrip()
     name = _assistant_name()
@@ -261,7 +261,7 @@ def _compose_gmail(receiver: str, message: str, subject: str = "") -> str:
     if not ok:
         return msg
 
-    body = with_athena_signature(message)
+    body = with_atlas_signature(message)
     _pending_draft = {
         "platform": "gmail",
         "receiver": receiver,
@@ -317,7 +317,7 @@ def _desktop_compose(app_name: str, receiver: str, message: str) -> str:
     time.sleep(1.0)
     pyautogui.press("enter")
     time.sleep(0.8)
-    body = with_athena_signature(message)
+    body = with_atlas_signature(message)
     _paste_text(body)
     _pending_draft = {"platform": app_name.lower(), "receiver": receiver, "ts": time.time()}
     name = _assistant_name()
@@ -405,7 +405,7 @@ def _compose_instagram(receiver: str, message: str) -> str:
         time.sleep(0.15)
     pyautogui.press("enter")
     time.sleep(2.0)
-    _paste_text(with_athena_signature(message))
+    _paste_text(with_atlas_signature(message))
     _pending_draft = {"platform": "instagram", "receiver": receiver, "ts": time.time()}
     return (
         f"Composed an Instagram DM to {receiver} (signed by {_assistant_name()}). "
@@ -566,7 +566,7 @@ def send_message(
             time.sleep(0.3)
             pyautogui.press("enter")
             time.sleep(1.0)
-            _paste_text(with_athena_signature(message_text))
+            _paste_text(with_atlas_signature(message_text))
             global _pending_draft
             _pending_draft = {"platform": "messenger", "receiver": receiver, "ts": time.time()}
             result = (

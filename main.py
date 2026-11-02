@@ -65,7 +65,7 @@ __import__("builtins").print = _safe_print
 import sounddevice as sd
 from google import genai
 from google.genai import types
-from ui import AthenaUI
+from ui import AtlasUI
 from memory.memory_manager import (
     load_memory, update_memory, format_memory_for_prompt,
     save_session_summary, peek_last_session, get_response_language,
@@ -125,7 +125,7 @@ from core.permissions import (
     evaluate_permission, remember_session_allow, get_confirm_timeout, RiskLevel,
     classify_user_permission_reply, tool_permission_key,
 )
-from core.logger import get_logger, log as athena_log, set_hud_sink, log_path
+from core.logger import get_logger, log as atlas_log, set_hud_sink, log_path
 from core.agent_orchestrator import AgentOrchestrator
 
 
@@ -137,7 +137,7 @@ def classify_exit_intent(text: str) -> str | None:
     compact = re.sub(r"[\s'_]+", "", raw)
     cleaned = re.sub(r"\s+", " ", raw)
 
-    # PC power — never treat as Athena quit
+    # PC power — never treat as Atlas quit
     if any(x in cleaned for x in (
         "the computer", "the pc", "the laptop", "my computer", "my pc", "the machine",
         "this computer", "this pc", "this laptop", "the desktop", "my laptop",
@@ -150,17 +150,17 @@ def classify_exit_intent(text: str) -> str | None:
 
     if any(p in compact for p in (
         "shutdownyourself", "shutyourselfdown", "shutyourselfoff",
-        "quitathena", "exitatheena", "exitatheana", "exitathena",
-        "quitjarvis", "exitjarvis", "killjarvis", "killathena",
+        "quitatlas", "exitatheena", "exitatheana", "exitatlas",
+        "quitjarvis", "exitjarvis", "killjarvis", "killatlas",
         "shutdowncompletely", "closetheapp", "shutyourself",
-        "athenashutdown", "youcanshutdown", "ucanshutdown", "canshutdown",
+        "atlasshutdown", "youcanshutdown", "ucanshutdown", "canshutdown",
         "setyourselfdown",
     )):
         return "shutdown"
 
     if any(p in cleaned for p in (
         "shut down yourself", "shutdown yourself", "shut yourself down",
-        "quit athena", "quit jarvis", "exit the app", "shut down completely",
+        "quit atlas", "quit jarvis", "exit the app", "shut down completely",
         "turn yourself off", "kill yourself", "shut down", "shutdown",
     )):
         return "shutdown"
@@ -968,7 +968,7 @@ TOOL_DECLARATIONS = [
         }
     },
     {
-        "name": "shutdown_athena",
+        "name": "shutdown_atlas",
         "description": (
             "Fully quits Atlas and exits the process. "
             "Call ONLY when the user explicitly wants to shut down completely, "
@@ -1143,9 +1143,9 @@ class SleepRequested(Exception):
     """Raised inside the live TaskGroup to tear down Gemini when HUD sleeps."""
 
 
-class AthenaLive:
+class AtlasLive:
 
-    def __init__(self, ui: AthenaUI):
+    def __init__(self, ui: AtlasUI):
         self.ui             = ui
         self._asst_name     = DEFAULT_ASSISTANT_NAME   # updated each session from config
         self.session              = None
@@ -1198,25 +1198,25 @@ class AthenaLive:
         self._reconnect_needed = False
         self._wake_listener = None
         self._pending_wake_greeting = False  # speak "I'm back" after reconnect from sleep
-        # File logging + mirror HUD lines to logs/athena.log
+        # File logging + mirror HUD lines to logs/atlas.log
         get_logger()
         set_hud_sink(None)  # HUD is source; we hook write_log below
         _orig_write = self.ui.write_log
         def _logged_write(text: str):
             _orig_write(text)
             try:
-                athena_log(text, "info")
+                atlas_log(text, "info")
             except Exception:
                 pass
         self.ui.write_log = _logged_write  # type: ignore[method-assign]
-        athena_log(f"Atlas logger ready → {log_path()}")
+        atlas_log(f"Atlas logger ready → {log_path()}")
         try:
             from core.mt5_log import set_hud_sink as set_mt5_hud
             from actions.mt5_analysis import start_mt5_keepalive
             set_mt5_hud(self.ui.write_log)
             start_mt5_keepalive()
         except Exception as e:
-            athena_log(f"MT5 keepalive: {e}", "warning")
+            atlas_log(f"MT5 keepalive: {e}", "warning")
         self._turn_done_event: asyncio.Event | None = None
         self._dashboard     = None
         self._briefing_sent    = False          # morning briefing fires once per process
@@ -1241,7 +1241,7 @@ class AthenaLive:
                 from actions.whatsapp_bridge_client import ensure_bridge
                 ensure_bridge()
             except Exception as e:
-                athena_log(f"WhatsApp bridge start: {e}")
+                atlas_log(f"WhatsApp bridge start: {e}")
             start_whatsapp_watcher()
 
     def request_sleep(self) -> None:
@@ -1312,7 +1312,7 @@ class AthenaLive:
             except Exception:
                 pass
             try:
-                athena_log("SYS: Shutdown complete.")
+                atlas_log("SYS: Shutdown complete.")
             except Exception:
                 pass
             import os as _os
@@ -1373,7 +1373,7 @@ class AthenaLive:
         # TaskGroup wraps task errors in ExceptionGroup (3.11+)
         try:
             if isinstance(exc, BaseExceptionGroup):
-                return any(AthenaLive._is_sleep_exc(e) for e in exc.exceptions)
+                return any(AtlasLive._is_sleep_exc(e) for e in exc.exceptions)
         except NameError:
             pass
         return "SLEEP_REQUESTED" in str(exc)
@@ -1408,7 +1408,7 @@ class AthenaLive:
                     self._loop,
                 )
                 return
-            athena_log(f"Permission pending; typed text not classified: {text!r}")
+            atlas_log(f"Permission pending; typed text not classified: {text!r}")
         else:
             exit_kind = classify_exit_intent(text)
             if exit_kind == "shutdown":
@@ -1493,7 +1493,7 @@ class AthenaLive:
             try:
                 img_b, mime_t = await asyncio.to_thread(_capture_screen)
             except Exception as e:
-                athena_log(f"Screen share capture failed: {e}", "warning")
+                atlas_log(f"Screen share capture failed: {e}", "warning")
                 print(f"[Share] capture failed: {e}")
                 return False
             digest = hashlib.md5(img_b).hexdigest()
@@ -1506,13 +1506,13 @@ class AthenaLive:
             try:
                 await self._send_live_image(img_b, mime_t)
             except Exception as e:
-                athena_log(f"Screen share inject failed: {e}", "warning")
+                atlas_log(f"Screen share inject failed: {e}", "warning")
                 print(f"[Share] inject failed: {e}")
                 return False
             self._share_turn_sent = True
             self._share_last_sent = time.monotonic()
             tag = reason or "live"
-            athena_log(f"Screen share frame sent ({len(img_b):,} bytes, {tag})")
+            atlas_log(f"Screen share frame sent ({len(img_b):,} bytes, {tag})")
             print(f"[Share] {len(img_b):,} bytes ({tag})")
             return True
 
@@ -1523,7 +1523,7 @@ class AthenaLive:
         try:
             img_b, mime_t = await asyncio.to_thread(_capture_screen)
         except Exception as e:
-            athena_log(f"Screen share capture failed: {e}", "warning")
+            atlas_log(f"Screen share capture failed: {e}", "warning")
             print(f"[Share] capture failed: {e}")
             return False
         digest = hashlib.md5(img_b).hexdigest()
@@ -1548,11 +1548,11 @@ class AthenaLive:
             )
             self._share_turn_sent = True
             self._share_last_sent = time.monotonic()
-            athena_log(f"Screen share frame sent ({len(img_b):,} bytes, typed)")
+            atlas_log(f"Screen share frame sent ({len(img_b):,} bytes, typed)")
             print(f"[Share] {len(img_b):,} bytes (typed)")
             return True
         except Exception as e:
-            athena_log(f"Screen share inject failed: {e}", "warning")
+            atlas_log(f"Screen share inject failed: {e}", "warning")
             print(f"[Share] inject failed: {e}")
             return False
 
@@ -1577,7 +1577,7 @@ class AthenaLive:
             f"SYS: Awaiting permission — {decision.summary} "
             f"(say 'go ahead' / 'permission granted' or 'abort')"
         )
-        athena_log(f"Permission REQUIRED — {decision.summary}")
+        atlas_log(f"Permission REQUIRED — {decision.summary}")
         print(f"[ATLAS] ⏳ permission required: {decision.summary}")
         if self._dashboard:
             asyncio.create_task(self._dashboard.broadcast({
@@ -1684,7 +1684,7 @@ class AthenaLive:
                 except Exception:
                     pass
             self.ui.write_log(f"SYS: Permission ABORTED — {summary}")
-            athena_log(f"Permission ABORTED — {summary}")
+            atlas_log(f"Permission ABORTED — {summary}")
             print(f"[ATLAS] 🚫 voice abort: {summary}")
             try:
                 learner_log_tool(name, str(args.get("action", "")), "cancelled")
@@ -1711,7 +1711,7 @@ class AthenaLive:
         if str(pending.get("risk", "")).lower() == "medium":
             remember_session_allow(name, str(args.get("action", "")))
         self.ui.write_log(f"SYS: Permission GRANTED — {summary}")
-        athena_log(f"Permission GRANTED — {summary} ({name}) utterance={user_text!r}")
+        atlas_log(f"Permission GRANTED — {summary} ({name}) utterance={user_text!r}")
         print(f"[ATLAS] ✅ voice grant: {summary}")
         fp = self._grant_fp(name, args)
         self._grant_in_progress = fp
@@ -1910,10 +1910,10 @@ class AthenaLive:
         args = dict(fc.args or {})
 
         print(f"[ATLAS] 🔧 {name}  {args}")
-        athena_log(f"TOOL {name} {args}")
+        atlas_log(f"TOOL {name} {args}")
         self.ui.set_state("THINKING")
 
-        # ── Permission gate (voice/text: Athena asks, user says go ahead / abort) ─
+        # ── Permission gate (voice/text: Atlas asks, user says go ahead / abort) ─
         local_grant = getattr(fc, "id", "") == "granted-local"
         if name != "save_memory" and not local_grant:
             fp = self._grant_fp(name, args)
@@ -1967,7 +1967,7 @@ class AthenaLive:
                 )
                 if preapproved:
                     print(f"[ATLAS] ✅ voice-granted {name}")
-                    athena_log(f"Permission pre-approved — executing {name}")
+                    atlas_log(f"Permission pre-approved — executing {name}")
                     self._voice_granted_key = None
                     self._voice_granted_name = None
                     self._voice_granted_until = 0.0
@@ -1980,7 +1980,7 @@ class AthenaLive:
                     if pending and now < float(pending.get("expires", 0)):
                         same = pending.get("key") == key or pending.get("name") == name
                         if same:
-                            athena_log(f"Permission still pending (no re-ask) — {pending.get('summary')}")
+                            atlas_log(f"Permission still pending (no re-ask) — {pending.get('summary')}")
                             msg = (
                                 "WAIT_FOR_USER: Permission was already requested once. "
                                 "This is NOT a system error or failure. "
@@ -1996,7 +1996,7 @@ class AthenaLive:
                                 response={"result": msg},
                             )
                         # Different action while one is pending — replace pending
-                        athena_log(
+                        atlas_log(
                             f"Replacing pending permission "
                             f"{pending.get('summary')} → {decision.summary}"
                         )
@@ -2242,7 +2242,7 @@ class AthenaLive:
                     self._share_turn_sent = False
                     self._share_mic_armed = False
                     self.ui.write_log("SYS: Screen share OFF")
-                    athena_log("Screen share OFF")
+                    atlas_log("Screen share OFF")
                     result = "Screen sharing stopped. I no longer receive screen snapshots until you start sharing again."
                 elif action in ("status", "state"):
                     result = (
@@ -2262,7 +2262,7 @@ class AthenaLive:
                         "Do not call screen_process for every follow-up question."
                     )
                     self.ui.write_log("SYS: Screen share ON — stills while you talk.")
-                    athena_log("Screen share ON")
+                    atlas_log("Screen share ON")
                     print("[ATLAS] Screen share ON")
                     self._schedule_share_frame("start", force=True)
 
@@ -2413,7 +2413,7 @@ class AthenaLive:
                         "or use the tray icon to wake me."
                     )
 
-            elif name in ("shutdown_athena", "shutdown_Athena", "shutdown_jarvis"):
+            elif name in ("shutdown_atlas", "shutdown_Atlas", "shutdown_jarvis"):
                 self._begin_shutdown()
                 result = "Shutting down completely. Goodbye, sir."
 
@@ -2478,7 +2478,7 @@ class AthenaLive:
 
         def callback(indata, frames, time_info, status):
             with self._speaking_lock:
-                Athena_speaking = self._is_speaking
+                Atlas_speaking = self._is_speaking
             phone_listen = False
             dash = self._dashboard
             if dash is not None:
@@ -2487,7 +2487,7 @@ class AthenaLive:
                 except Exception:
                     phone_listen = False
             if (
-                not Athena_speaking
+                not Atlas_speaking
                 and not self._hold_mic
                 and not getattr(self, "_shutdown_started", False)
                 and not self.ui.muted
@@ -2606,11 +2606,11 @@ class AthenaLive:
                                     if verdict:
                                         await self._resolve_voice_permission(verdict, full_in)
                                     else:
-                                        athena_log(
+                                        atlas_log(
                                             f"Permission pending; voice not classified: {full_in!r}"
                                         )
                                 else:
-                                    # Spoken full quit — do not wait for Gemini to call shutdown_athena
+                                    # Spoken full quit — do not wait for Gemini to call shutdown_atlas
                                     exit_kind = classify_exit_intent(full_in)
                                     if exit_kind == "shutdown":
                                         self._begin_shutdown()
@@ -2667,7 +2667,7 @@ class AthenaLive:
                                 )
                                 # Mark next turn_complete behaviour depending on angle
                                 if self._vision_cam_active:
-                                    # Camera: keep busy until Athena finishes speaking the answer
+                                    # Camera: keep busy until Atlas finishes speaking the answer
                                     self._vision_cam_active    = False
                                     self._vision_close_pending = True
                                 else:
@@ -3036,7 +3036,7 @@ class AthenaLive:
         await asyncio.sleep(300)          # wait 5 min after startup before first check
         while True:
             if self.session:
-                # Don't interrupt if user spoke recently or Athena is mid-sentence
+                # Don't interrupt if user spoke recently or Atlas is mid-sentence
                 with self._speaking_lock:
                     speaking = self._is_speaking
                 recent_speech = (time.monotonic() - self._last_user_speech) < 30
@@ -3178,7 +3178,7 @@ class AthenaLive:
                             await self._resolve_voice_permission(verdict, text)
                             self.ui.write_log(f"[Web]: {text} (permission {verdict})")
                             continue
-                        athena_log(
+                        atlas_log(
                             f"Permission pending; dashboard text not classified: {text!r}"
                         )
                     else:
@@ -3240,7 +3240,7 @@ class AthenaLive:
             print(f"[Dashboard] Disabled: {e}")
             traceback.print_exc()
             try:
-                athena_log(f"SYS: Dashboard disabled — {e}")
+                atlas_log(f"SYS: Dashboard disabled — {e}")
             except Exception:
                 pass
             self._dashboard = None
@@ -3441,7 +3441,7 @@ def main():
             try:
                 import ctypes
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
-                    "Athena.Desktop"
+                    "Atlas.Desktop"
                 )
             except Exception:
                 pass
@@ -3455,21 +3455,21 @@ def main():
     for candidate in (
         BASE_DIR / "config" / "astra.png",
         BASE_DIR / "config" / "astra.ico",
-        BASE_DIR / "config" / "athena.png",
-        BASE_DIR / "config" / "athena.ico",
+        BASE_DIR / "config" / "atlas.png",
+        BASE_DIR / "config" / "atlas.ico",
         BASE_DIR / "face.png",
-        BASE_DIR / "config" / "Athena.ico",
+        BASE_DIR / "config" / "Atlas.ico",
     ):
         if candidate.exists():
             face = candidate
             break
-    ui = AthenaUI(str(face) if face else "face.png")
+    ui = AtlasUI(str(face) if face else "face.png")
 
     def runner():
         ui.wait_for_api_key()
-        Athena = AthenaLive(ui)
+        Atlas = AtlasLive(ui)
         try:
-            asyncio.run(Athena.run())
+            asyncio.run(Atlas.run())
         except KeyboardInterrupt:
             print("\n🔴 Shutting down...")
 

@@ -476,7 +476,7 @@ def is_session_language_key(key: str) -> bool:
 
 def get_response_language(memory: dict | None = None) -> str:
     """
-    Language Athena speaks in this process. Default English.
+    Language Atlas speaks in this process. Default English.
     Explicit user commands can change it for the current run only.
     Never use identity/language (that is what the user speaks).
     """

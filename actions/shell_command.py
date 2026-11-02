@@ -2,7 +2,7 @@
 
 On Windows, commands that need Administrator (or as_admin=true) trigger a UAC
 prompt via ShellExecuteW runas so the packaged app can elevate without
-running Athena itself as admin.
+running Atlas itself as admin.
 """
 
 from __future__ import annotations
@@ -90,12 +90,12 @@ def _run_elevated_windows(command: str, shell: str, timeout: int) -> str:
 
     stamp = f"{os.getpid()}_{int(time.time() * 1000)}"
     tmp = Path(tempfile.gettempdir())
-    out_path = tmp / f"athena_shell_{stamp}.txt"
-    bat_path = tmp / f"athena_shell_{stamp}.bat"
-    marker = "ATHENA_EXIT="
+    out_path = tmp / f"atlas_shell_{stamp}.txt"
+    bat_path = tmp / f"atlas_shell_{stamp}.bat"
+    marker = "ATLAS_EXIT="
 
     if shell in ("powershell", "pwsh", "ps"):
-        ps1_path = tmp / f"athena_shell_{stamp}.ps1"
+        ps1_path = tmp / f"atlas_shell_{stamp}.ps1"
         ps1_path.write_text(
             command + "\n",
             encoding="utf-8",
@@ -150,7 +150,7 @@ def _run_elevated_windows(command: str, shell: str, timeout: int) -> str:
     else:
         return "Elevated command timed out waiting for output (UAC may still be open)."
 
-    for p in (out_path, bat_path, tmp / f"athena_shell_{stamp}.ps1"):
+    for p in (out_path, bat_path, tmp / f"atlas_shell_{stamp}.ps1"):
         try:
             p.unlink(missing_ok=True)
         except Exception:

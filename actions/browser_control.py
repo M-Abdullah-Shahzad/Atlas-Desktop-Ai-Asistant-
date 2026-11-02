@@ -107,7 +107,7 @@ def _real_profile_dir(browser: str) -> str:
             print(f"[Browser] ✅ Real profile found for {browser}: {p}")
             return str(p)
 
-    fallback = home / ".Athena_profiles" / browser
+    fallback = home / ".Atlas_profiles" / browser
     fallback.mkdir(parents=True, exist_ok=True)
     print(f"[Browser] ⚠️  Real profile not found for {browser}, using: {fallback}")
     return str(fallback)
@@ -533,7 +533,7 @@ class _BrowserSession:
 
         if engine_name == "firefox":
             profile = _firefox_profile_dir() or str(
-                Path.home() / ".Athena_profiles" / "firefox"
+                Path.home() / ".Atlas_profiles" / "firefox"
             )
             kwargs: dict = {
                 "headless":    False,
@@ -547,17 +547,17 @@ class _BrowserSession:
             try:
                 self._context = await engine_obj.launch_persistent_context(profile, **kwargs)
             except Exception as e:
-                print(f"[Browser] Firefox real profile failed ({e}), using Athena profile")
-                Athena = str(Path.home() / ".Athena_profiles" / "firefox_Athena")
-                Path(Athena).mkdir(parents=True, exist_ok=True)
-                self._context = await engine_obj.launch_persistent_context(Athena, **kwargs)
+                print(f"[Browser] Firefox real profile failed ({e}), using Atlas profile")
+                Atlas = str(Path.home() / ".Atlas_profiles" / "firefox_Atlas")
+                Path(Atlas).mkdir(parents=True, exist_ok=True)
+                self._context = await engine_obj.launch_persistent_context(Atlas, **kwargs)
 
             self._page = await self._adopt_page()
             print(f"[Browser] ✅ Firefox launched")
             return
 
         if engine_name == "webkit":
-            safari_profile = str(Path.home() / ".Athena_profiles" / "safari")
+            safari_profile = str(Path.home() / ".Atlas_profiles" / "safari")
             Path(safari_profile).mkdir(parents=True, exist_ok=True)
             kwargs = {
                 "headless":    False,
@@ -609,16 +609,16 @@ class _BrowserSession:
 
         # Gerçek profil açılamadı (tarayıcı zaten açık / kilitli profil / yeni
         # Chrome sürümleri otomasyonla gerçek profili engelliyor). Kalıcı
-        # Athena otomasyon profiline geçilir — buraya bir kez giriş yapılan
+        # Atlas otomasyon profiline geçilir — buraya bir kez giriş yapılan
         # hesaplar sonraki oturumlarda da açık kalır.
-        Athena_profile = str(Path.home() / ".Athena_profiles" / self.browser_name)
-        Path(Athena_profile).mkdir(parents=True, exist_ok=True)
-        print(f"[Browser] Retrying with Athena profile: {Athena_profile}")
+        Atlas_profile = str(Path.home() / ".Atlas_profiles" / self.browser_name)
+        Path(Atlas_profile).mkdir(parents=True, exist_ok=True)
+        print(f"[Browser] Retrying with Atlas profile: {Atlas_profile}")
 
         try:
-            self._context = await engine_obj.launch_persistent_context(Athena_profile, **kwargs)
+            self._context = await engine_obj.launch_persistent_context(Atlas_profile, **kwargs)
             self._page = await self._adopt_page()
-            print(f"[Browser] ✅ Launched [{label}] with Athena profile "
+            print(f"[Browser] ✅ Launched [{label}] with Atlas profile "
                   f"(sign-ins persist across sessions)")
         except Exception as e2:
             raise RuntimeError(f"Could not launch {self.browser_name}: {e2}") from e2
@@ -836,7 +836,7 @@ class _BrowserSession:
     async def screenshot(self, path: str = None) -> str:
         page = await self._get_page()
         try:
-            save_path = path or str(Path.home() / "Desktop" / "Athena_screenshot.png")
+            save_path = path or str(Path.home() / "Desktop" / "Atlas_screenshot.png")
             await page.screenshot(path=save_path, full_page=False)
             return f"Screenshot saved: {save_path}"
         except Exception as e:

@@ -1,5 +1,5 @@
 """
-dashboard/server.py — Athena Local HTTP Dashboard
+dashboard/server.py — Atlas Local HTTP Dashboard
 
 HTTPS on port 1970 (Tailscale / LAN). Persistent remote password in config/remote.json.
 AES-256-CBC with a stable command key. CryptoJS is served locally.
@@ -53,8 +53,8 @@ REMOTE_CONFIG_FILE   = BASE_DIR / "config" / "remote.json"
 def _make_uploads_dir() -> Path:
     """Return (and create) the cross-platform uploads folder."""
     for candidate in [
-        Path.home() / "Downloads" / "Athena Uploads",
-        Path.home() / "Documents" / "Athena Uploads",
+        Path.home() / "Downloads" / "Atlas Uploads",
+        Path.home() / "Documents" / "Atlas Uploads",
         BASE_DIR / "uploads",
     ]:
         try:
@@ -79,7 +79,7 @@ _KEY_CHARS = [c for c in (string.ascii_uppercase + string.digits)
               if c not in ('O', 'I', 'L', '0', '1')]
 
 # ── AES-256-CBC ───────────────────────────────────────────────────────────────
-_AES_SALT = b'Athena-DASHBOARD-v1'
+_AES_SALT = b'Atlas-DASHBOARD-v1'
 
 
 def _derive_key(session_key: str) -> bytes:
@@ -178,7 +178,7 @@ def _ensure_network_access(port: int) -> None:
             )
 
         bat_body = "\r\n".join(bat_lines) + "\r\n"
-        fd, bat_path = tempfile.mkstemp(suffix=".bat", prefix="Athena_fw_")
+        fd, bat_path = tempfile.mkstemp(suffix=".bat", prefix="Atlas_fw_")
         try:
             os.write(fd, bat_body.encode("mbcs"))   # Windows cmd.exe expects ANSI
             os.close(fd)
@@ -408,8 +408,8 @@ def _tailscale_ip() -> str | None:
 def _dash_log(msg: str) -> None:
     print(f"[Dashboard] {msg}")
     try:
-        from core.logger import log as athena_log
-        athena_log(f"SYS: {msg}")
+        from core.logger import log as atlas_log
+        atlas_log(f"SYS: {msg}")
     except Exception:
         pass
 
@@ -494,7 +494,7 @@ class DashboardServer:
     @staticmethod
     def _ssl_files() -> tuple[Path, Path] | None:
         certs = BASE_DIR / "config" / "certs"
-        for stem in ("athena", "Athena"):
+        for stem in ("atlas", "Atlas"):
             key, crt = certs / f"{stem}.key", certs / f"{stem}.crt"
             if key.exists() and crt.exists():
                 return key, crt

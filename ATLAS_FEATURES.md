@@ -20,7 +20,7 @@
 
 - PyQt6 desktop interface with animated assistant HUD.
 - Listening, thinking, speaking, sleeping, and error states.
-- Activity log mirrored to the existing `logs/athena.log` compatibility path.
+- Activity log mirrored to the existing `logs/atlas.log` compatibility path.
 - Content panel for search results, generated code, tables, news, and file results.
 - Drag-and-drop file area for uploaded files.
 - Camera preview and live camera stream.
@@ -185,7 +185,7 @@ WhatsApp source setup requires Node.js 18+ and the packages in `whatsapp_bridge/
 
 - Local web dashboard served through FastAPI and Uvicorn.
 - Phone microphone relay into the Gemini Live session.
-- Athena audio relay back to the phone.
+- Atlas audio relay back to the phone.
 - Remote text commands.
 - Remote permission approval and denial.
 - Remote mute, interrupt, sleep, wake, and configuration controls.
@@ -209,11 +209,11 @@ WhatsApp source setup requires Node.js 18+ and the packages in `whatsapp_bridge/
 
 ## 16. Sleep, Wake, and Shutdown
 
-- Sleep mode hides the HUD and keeps Athena running in the system tray.
+- Sleep mode hides the HUD and keeps Atlas running in the system tray.
 - Wake through the tray icon or configured wake word.
 - Wake greeting after returning from sleep.
 - Shutdown command saves session information and exits the application.
-- Shutting down Athena is separate from shutting down the computer.
+- Shutting down Atlas is separate from shutting down the computer.
 
 ## 17. Packaging and Deployment
 

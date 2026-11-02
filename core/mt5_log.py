@@ -101,9 +101,9 @@ def mt5_log(msg: str, level: str = "info", *, hud: bool = False) -> None:
         except Exception:
             pass
     try:
-        from core.logger import log as athena_log
+        from core.logger import log as atlas_log
         if lvl in ("warning", "error"):
-            athena_log(f"MT5 {msg}", lvl)
+            atlas_log(f"MT5 {msg}", lvl)
     except Exception:
         pass
 

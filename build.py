@@ -23,7 +23,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 DIST = ROOT / "dist" / "Atlas"
-SPEC = ROOT / "athena.spec"
+SPEC = ROOT / "atlas.spec"
 SRC_PNG = ROOT / "config" / "astra.png"
 SRC_ICO = ROOT / "config" / "astra.ico"
 
@@ -70,11 +70,11 @@ def _write_ico(png_path: Path, ico_path: Path) -> None:
 
 def _ensure_icons() -> Path:
     if SRC_PNG.exists() and (not SRC_ICO.exists() or SRC_ICO.stat().st_size < 4096):
-        print("Generating config/athena.ico from config/athena.png…")
+        print("Generating config/atlas.ico from config/atlas.png…")
         _write_ico(SRC_PNG, SRC_ICO)
     if SRC_ICO.exists():
         return SRC_ICO
-    fallback = ROOT / "config" / "Athena.ico"
+    fallback = ROOT / "config" / "Atlas.ico"
     return fallback if fallback.exists() else SRC_ICO
 
 
@@ -115,7 +115,7 @@ def _stash_user_runtime() -> Path | None:
     """Keep packaged config/memory across a rebuild (PyInstaller wipes dist/)."""
     if not DIST.exists():
         return None
-    stash = ROOT / "build" / "_athena_user_stash"
+    stash = ROOT / "build" / "_atlas_user_stash"
     if stash.exists():
         shutil.rmtree(stash, ignore_errors=True)
     stash.mkdir(parents=True, exist_ok=True)

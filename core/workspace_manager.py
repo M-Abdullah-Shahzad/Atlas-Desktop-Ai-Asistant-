@@ -12,7 +12,7 @@ class WorkspaceManager:
 
     def __init__(self, root: str | Path | None = None):
         self.root = Path(root) if root is not None else self._default_root()
-        self._state_file = self.root / "memory" / "last_created_path.json" if self.root.name == "Athena_AI_RAG_Assistant" else self.root / ".atlas" / "last_created_path.json"
+        self._state_file = self.root / "memory" / "last_created_path.json" if self.root.name == "Atlas_AI_RAG_Assistant" else self.root / ".atlas" / "last_created_path.json"
         self._state_file.parent.mkdir(parents=True, exist_ok=True)
 
     @staticmethod

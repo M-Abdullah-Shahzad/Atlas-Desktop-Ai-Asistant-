@@ -1980,9 +1980,9 @@ class MainWindow(QMainWindow):
     # Icon generation — arc-reactor style, rendered with Pillow
     # ------------------------------------------------------------------
     @staticmethod
-    def _build_Athena_icon(out_path: Path) -> bool:
+    def _build_Atlas_icon(out_path: Path) -> bool:
         """
-        Render a Athena arc-reactor icon at 4× resolution and downsample
+        Render a Atlas arc-reactor icon at 4× resolution and downsample
         for crisp results at all sizes. Saves a multi-res .ico to out_path.
         Returns True on success.
         """
@@ -2222,9 +2222,9 @@ class MainWindow(QMainWindow):
         desktop = self._get_desktop_dir()
 
         # Arc-reactor icon (.ico — also exported as .png for Linux/macOS)
-        ico_path = Path(__file__).resolve().parent / "config" / "Athena.ico"
+        ico_path = Path(__file__).resolve().parent / "config" / "Atlas.ico"
         if not ico_path.exists():
-            self._build_Athena_icon(ico_path)
+            self._build_Atlas_icon(ico_path)
 
         try:
             _os = platform.system()
@@ -2248,7 +2248,7 @@ class MainWindow(QMainWindow):
 
                 # Launcher executable (bash — runs as background process,
                 # macOS does NOT open Terminal for executables inside .app bundles)
-                launcher = mac_dir / "Athena"
+                launcher = mac_dir / "Atlas"
                 launcher.write_text(
                     "#!/usr/bin/env bash\n"
                     f'cd "{script.parent}"\n'
@@ -2263,9 +2263,9 @@ class MainWindow(QMainWindow):
                     '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" '
                     '"http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'
                     '<plist version="1.0"><dict>\n'
-                    '  <key>CFBundleExecutable</key><string>Athena</string>\n'
+                    '  <key>CFBundleExecutable</key><string>Atlas</string>\n'
                     '  <key>CFBundleIdentifier</key>'
-                    '<string>com.Athena.assistant</string>\n'
+                    '<string>com.Atlas.assistant</string>\n'
                     f'  <key>CFBundleName</key><string>{self._assistant_name}</string>\n'
                     '  <key>CFBundlePackageType</key><string>APPL</string>\n'
                     '  <key>CFBundleVersion</key><string>1.0</string>\n'
@@ -2941,7 +2941,7 @@ class MainWindow(QMainWindow):
                 key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
                     r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_READ)
                 try:
-                    winreg.QueryValueEx(key, "Athena_AI")
+                    winreg.QueryValueEx(key, "Atlas_AI")
                     return True
                 except FileNotFoundError:
                     return False
@@ -2949,9 +2949,9 @@ class MainWindow(QMainWindow):
                     winreg.CloseKey(key)
             elif _OS == "Darwin":
                 return (Path.home() / "Library" / "LaunchAgents"
-                        / "com.Athena.assistant.plist").exists()
+                        / "com.Atlas.assistant.plist").exists()
             else:
-                return (Path.home() / ".config" / "autostart" / "Athena.desktop").exists()
+                return (Path.home() / ".config" / "autostart" / "Atlas.desktop").exists()
         except Exception:
             return False
 
@@ -2964,17 +2964,17 @@ class MainWindow(QMainWindow):
                 reg = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
                     r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_ALL_ACCESS)
                 if currently_on:
-                    winreg.DeleteValue(reg, "Athena_AI")
+                    winreg.DeleteValue(reg, "Atlas_AI")
                 else:
                     pythonw = Path(sys.executable).parent / "pythonw.exe"
                     exe = str(pythonw if pythonw.exists() else sys.executable)
-                    winreg.SetValueEx(reg, "Athena_AI", 0, winreg.REG_SZ,
+                    winreg.SetValueEx(reg, "Atlas_AI", 0, winreg.REG_SZ,
                                       f'"{exe}" "{script}"')
                 winreg.CloseKey(reg)
             elif _OS == "Darwin":
                 plist_dir = Path.home() / "Library" / "LaunchAgents"
                 plist_dir.mkdir(parents=True, exist_ok=True)
-                plist = plist_dir / "com.Athena.assistant.plist"
+                plist = plist_dir / "com.Atlas.assistant.plist"
                 if currently_on:
                     plist.unlink(missing_ok=True)
                 else:
@@ -2983,7 +2983,7 @@ class MainWindow(QMainWindow):
                         '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" '
                         '"http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'
                         '<plist version="1.0"><dict>\n'
-                        '  <key>Label</key><string>com.Athena.assistant</string>\n'
+                        '  <key>Label</key><string>com.Atlas.assistant</string>\n'
                         '  <key>ProgramArguments</key><array>\n'
                         f'    <string>{sys.executable}</string>\n'
                         f'    <string>{script}</string>\n'
@@ -2994,7 +2994,7 @@ class MainWindow(QMainWindow):
             else:
                 desk_dir = Path.home() / ".config" / "autostart"
                 desk_dir.mkdir(parents=True, exist_ok=True)
-                desk = desk_dir / "Athena.desktop"
+                desk = desk_dir / "Atlas.desktop"
                 if currently_on:
                     desk.unlink(missing_ok=True)
                 else:
@@ -3253,7 +3253,7 @@ class _RootShim:
         pass
 
 
-class AthenaUI:
+class AtlasUI:
     def __init__(self, face_path: str, size=None):
         self._app = QApplication.instance() or QApplication(sys.argv)
         self._app.setStyle("Fusion")

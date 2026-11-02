@@ -1,5 +1,5 @@
 """
-WhatsApp control for Athena — Baileys bridge (no Desktop GUI).
+WhatsApp control for Atlas — Baileys bridge (no Desktop GUI).
 
 Compose → confirm → send. Auto-reply via whatsapp_watch + bridge.
 """
@@ -22,9 +22,9 @@ from actions import whatsapp_bridge_client as bridge
 def _assistant_name() -> str:
     try:
         from memory.config_manager import get_assistant_name
-        return get_assistant_name() or "Athena"
+        return get_assistant_name() or "Atlas"
     except Exception:
-        return "Athena"
+        return "Atlas"
 
 
 def _user_name() -> str:
@@ -214,7 +214,7 @@ def _resolve_media_path(raw: str) -> Path | None:
 def _capture_screenshot_file() -> Path:
     from actions.screen_processor import _capture_screen
     data, _fmt = _capture_screen()
-    dest = Path(tempfile.gettempdir()) / f"athena_wa_shot_{int(time.time())}.png"
+    dest = Path(tempfile.gettempdir()) / f"atlas_wa_shot_{int(time.time())}.png"
     dest.write_bytes(data)
     return dest
 
@@ -253,7 +253,7 @@ def _synth_voice_file(text: str) -> tuple[Path, bool]:
     ffmpeg = _find_ffmpeg()
     if not ffmpeg:
         return src, src.suffix.lower() in (".ogg", ".opus")
-    dest = Path(tempfile.gettempdir()) / f"athena_wa_voice_{int(time.time() * 1000)}.ogg"
+    dest = Path(tempfile.gettempdir()) / f"atlas_wa_voice_{int(time.time() * 1000)}.ogg"
     flags = 0
     if sys.platform == "win32":
         flags = subprocess.CREATE_NO_WINDOW  # type: ignore[attr-defined]

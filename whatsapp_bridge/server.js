@@ -1,5 +1,5 @@
 /**
- * Athena WhatsApp bridge — Baileys on 127.0.0.1 only.
+ * Atlas WhatsApp bridge — Baileys on 127.0.0.1 only.
  * Auth + QR under memory/whatsapp_baileys/ (passed via AUTH_DIR).
  */
 "use strict";
@@ -389,7 +389,7 @@ function convertToVoiceOgg(src) {
     console.error("[WA Bridge] ffmpeg not found — cannot make a WhatsApp voice note");
     return "";
   }
-  const dest = path.join(os.tmpdir(), `athena-wa-voice-${Date.now()}.ogg`);
+  const dest = path.join(os.tmpdir(), `atlas-wa-voice-${Date.now()}.ogg`);
   const r = spawnSync(
     ffmpeg,
     [

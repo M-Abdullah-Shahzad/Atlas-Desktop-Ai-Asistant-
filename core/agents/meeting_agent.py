@@ -59,7 +59,7 @@ class MeetingAgent:
     def __init__(self, workspace: WorkspaceManager | None = None):
         self.workspace = workspace or WorkspaceManager()
         self.state = "IDLE"
-        self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="athena-meeting")
+        self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="atlas-meeting")
 
     def intake_transcript(self, transcript: str | list[TranscriptSegment]) -> list[TranscriptSegment]:
         if isinstance(transcript, str):

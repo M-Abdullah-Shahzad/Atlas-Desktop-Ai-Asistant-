@@ -9,7 +9,7 @@ from memory.memory_manager import get_response_language
 
 class ProactiveEngine:
     """
-    Decides when Athena should speak unprompted and builds a context-rich prompt.
+    Decides when Atlas should speak unprompted and builds a context-rich prompt.
 
     Defaults (more active continuous presence):
       min_silence_secs  — 600 s  (10 min) user must be silent before any check

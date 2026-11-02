@@ -1,5 +1,5 @@
 """
-Local wake-word listener for Athena sleep mode.
+Local wake-word listener for Atlas sleep mode.
 
 Uses Vosk with a constrained grammar so the mic only listens for
 "hey {assistant_name}" while the HUD is hidden and Gemini is paused.
@@ -87,7 +87,7 @@ def _is_wake(text: str, assistant_name: str) -> bool:
     name = _normalize(assistant_name)
     if not t or not name:
         return False
-    # Accept "hey athena", "hey athena please", trailing noise
+    # Accept "hey atlas", "hey atlas please", trailing noise
     if f"hey {name}" in t:
         return True
     # Partial streams sometimes drop "hey" briefly — require both tokens nearby
@@ -104,7 +104,7 @@ def _is_wake(text: str, assistant_name: str) -> bool:
 
 
 def _grammar_for(assistant_name: str) -> str:
-    name = _normalize(assistant_name) or "athena"
+    name = _normalize(assistant_name) or "atlas"
     phrases = [
         f"hey {name}",
         f"hey {name} hey {name}",
@@ -121,7 +121,7 @@ class WakeWordListener:
         self._stop = threading.Event()
         self._running = False
         self._on_wake: Callable[[], None] | None = None
-        self._name = "athena"
+        self._name = "atlas"
         self._lock = threading.Lock()
 
     @property
@@ -137,7 +137,7 @@ class WakeWordListener:
         with self._lock:
             if self._running:
                 self.stop()
-            self._name = (assistant_name or "athena").strip() or "athena"
+            self._name = (assistant_name or "atlas").strip() or "atlas"
             self._on_wake = on_wake
             self._stop.clear()
             self._thread = threading.Thread(

@@ -154,9 +154,9 @@
 
   <script>
     // ── Auth — bearer token ───────────────────────────────────────────────────
-    const _authToken  = sessionStorage.getItem('Athena_token')
+    const _authToken  = sessionStorage.getItem('Atlas_token')
                      || sessionStorage.getItem('jarvis_token');
-    const _sessionKey = sessionStorage.getItem('Athena_key')
+    const _sessionKey = sessionStorage.getItem('Atlas_key')
                      || sessionStorage.getItem('jarvis_key');
 
     if (!_authToken) {
@@ -170,7 +170,7 @@
     }
 
     // ── AES-256-CBC encryption (CryptoJS) ────────────────────────────────────
-    const _AES_SALT = 'Athena-DASHBOARD-v1';
+    const _AES_SALT = 'Atlas-DASHBOARD-v1';
     let _aesKey = null;
 
     function _initCrypto(key) {

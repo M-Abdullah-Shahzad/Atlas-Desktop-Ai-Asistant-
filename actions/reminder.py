@@ -30,7 +30,7 @@ def _get_os() -> str:
 
 
 def _scripts_dir() -> Path:
-    d = Path.home() / ".Athena" / "reminders"
+    d = Path.home() / ".Atlas" / "reminders"
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -157,7 +157,7 @@ def _xml_escape(text: str) -> str:
 
 
 def _write_toast_ps1(task_name: str, message: str) -> Path:
-    """Standalone PowerShell toast used when Athena.exe is frozen (no pythonw)."""
+    """Standalone PowerShell toast used when Atlas.exe is frozen (no pythonw)."""
     script_path = _scripts_dir() / f"{task_name}.ps1"
     raw_title = f"{get_assistant_name()} Reminder"
     ps_title = raw_title.replace("'", "''")
@@ -180,7 +180,7 @@ try {{
   $xml = New-Object Windows.Data.Xml.Dom.XmlDocument
   $xml.LoadXml('<toast><visual><binding template="ToastGeneric"><text>{xml_title}</text><text>{xml_body}</text></binding></visual></toast>')
   $toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
-  [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('Athena').Show($toast)
+  [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('Atlas').Show($toast)
 }} catch {{}}
 Start-Sleep -Seconds 16
 $n.Dispose()
@@ -261,7 +261,7 @@ def _schedule_mac(target_dt: datetime, task_name: str,
     agents_dir = Path.home() / "Library" / "LaunchAgents"
     agents_dir.mkdir(parents=True, exist_ok=True)
 
-    label     = f"com.Athena.reminder.{task_name}"
+    label     = f"com.Atlas.reminder.{task_name}"
     plist_path = agents_dir / f"{label}.plist"
 
     plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -365,7 +365,7 @@ def reminder(
 
     os_name    = _get_os()
     safe_msg   = _sanitise(message)
-    task_name  = f"AthenaReminder_{target_dt.strftime('%Y%m%d_%H%M%S')}"
+    task_name  = f"AtlasReminder_{target_dt.strftime('%Y%m%d_%H%M%S')}"
 
     try:
         if os_name == "windows" and getattr(sys, "frozen", False):

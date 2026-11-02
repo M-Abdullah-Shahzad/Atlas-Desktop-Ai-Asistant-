@@ -1,5 +1,5 @@
 """
-Continuous system + event monitoring for Athena.
+Continuous system + event monitoring for Atlas.
 
 Polls hardware and arbitrary watches; returns at most one [SYSTEM_ALERT] per call.
 Used by main.py's background loop (respects speak guards / cooldowns).
@@ -120,7 +120,7 @@ def add_process_watch(process_name: str) -> str:
             "id": f"proc_{key.replace(' ', '_')}",
             "type": "process",
             "match": name,
-            "on": "appear",  # alert when process appears while Athena is running
+            "on": "appear",  # alert when process appears while Atlas is running
         }
     )
     save_watches(watches)

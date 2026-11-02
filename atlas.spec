@@ -131,7 +131,7 @@ hiddenimports += [
 
 _ICON = ROOT / "config" / "astra.ico"
 if not _ICON.exists():
-    _ICON = ROOT / "config" / "Athena.ico"
+    _ICON = ROOT / "config" / "Atlas.ico"
 
 version_info = None
 if VSVersionInfo is not None:
@@ -175,7 +175,7 @@ a = Analysis(
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
-    runtime_hooks=[str(ROOT / "pyi_rth_athena.py")],
+    runtime_hooks=[str(ROOT / "pyi_rth_atlas.py")],
     excludes=[
         "torch",
         "tensorflow",

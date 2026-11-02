@@ -1,5 +1,5 @@
 """
-file_processor.py — Athena Universal File Processor
+file_processor.py — Atlas Universal File Processor
 
 Supported types:
   image   → describe, ocr, resize, convert, compress, crop
@@ -813,8 +813,8 @@ def file_processor(parameters: dict, player=None, speak=None) -> str:
     if not path.is_file():
         name = path.name
         for folder in (
-            Path.home() / "Downloads" / "Athena Uploads",
-            Path.home() / "Documents" / "Athena Uploads",
+            Path.home() / "Downloads" / "Atlas Uploads",
+            Path.home() / "Documents" / "Atlas Uploads",
             Path(__file__).resolve().parent.parent / "uploads",
         ):
             cand = folder / name

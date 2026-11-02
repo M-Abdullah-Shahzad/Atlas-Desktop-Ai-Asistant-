@@ -202,8 +202,8 @@ def show_dataframe(parameters: dict, player=None, speak=None) -> str:
     if not path.is_file():
         name = path.name
         for folder in (
-            Path.home() / "Downloads" / "Athena Uploads",
-            Path.home() / "Documents" / "Athena Uploads",
+            Path.home() / "Downloads" / "Atlas Uploads",
+            Path.home() / "Documents" / "Atlas Uploads",
             Path(__file__).resolve().parent.parent / "uploads",
         ):
             cand = folder / name

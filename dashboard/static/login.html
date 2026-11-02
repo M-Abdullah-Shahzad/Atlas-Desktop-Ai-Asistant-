@@ -153,9 +153,9 @@
   </div>
 
   <script>
-    // Try auto-reconnect with stored device token. Athena may still be starting.
+    // Try auto-reconnect with stored device token. Atlas may still be starting.
     (async function() {
-      const devTok = localStorage.getItem('Athena_device_token');
+      const devTok = localStorage.getItem('Atlas_device_token');
       if (!devTok) return;
       document.getElementById('reconnecting').style.display = 'block';
       for (let i = 0; i < 5; i++) {
@@ -167,8 +167,8 @@
           });
           const d = await r.json();
           if (d.ok && d.token) {
-            sessionStorage.setItem('Athena_key', d.key);
-            sessionStorage.setItem('Athena_token', d.token);
+            sessionStorage.setItem('Atlas_key', d.key);
+            sessionStorage.setItem('Atlas_token', d.token);
             location.replace('/');
             return;
           }
@@ -198,9 +198,9 @@
         shake(); return;
       }
       if (data.ok && data.token) {
-        sessionStorage.setItem('Athena_key', data.key || key);
-        sessionStorage.setItem('Athena_token', data.token);
-        if (data.device_token) localStorage.setItem('Athena_device_token', data.device_token);
+        sessionStorage.setItem('Atlas_key', data.key || key);
+        sessionStorage.setItem('Atlas_token', data.token);
+        if (data.device_token) localStorage.setItem('Atlas_device_token', data.device_token);
         location.href = '/';
       } else {
         inp.value = '';

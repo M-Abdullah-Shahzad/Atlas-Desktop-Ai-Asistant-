@@ -1,5 +1,5 @@
 """
-WhatsApp inbound watcher for Athena.
+WhatsApp inbound watcher for Atlas.
 
 Primary: poll Baileys bridge /events while connected.
 Fallback: WinRT toast listener only when bridge is disconnected.
@@ -54,8 +54,8 @@ _JUNK_SENDERS = {".", "-", "_", "~", "*", ",", "you", "me"}
 def _log(msg: str) -> None:
     print(f"[WhatsAppWatch] {msg}")
     try:
-        from core.logger import log as athena_log
-        athena_log(f"[WhatsAppWatch] {msg}", level="info")
+        from core.logger import log as atlas_log
+        atlas_log(f"[WhatsAppWatch] {msg}", level="info")
     except Exception:
         pass
 

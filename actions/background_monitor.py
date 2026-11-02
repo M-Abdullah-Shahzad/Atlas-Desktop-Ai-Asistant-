@@ -1,6 +1,6 @@
 """
 BackgroundMonitor — user-configured topic watching.
-Checks DDG news once per day per topic; alerts Athena when a new headline appears.
+Checks DDG news once per day per topic; alerts Atlas when a new headline appears.
 """
 import hashlib
 import json

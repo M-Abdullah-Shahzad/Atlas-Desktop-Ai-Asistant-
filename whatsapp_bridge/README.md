@@ -1,10 +1,10 @@
-# Athena WhatsApp Bridge (Baileys)
+# Atlas WhatsApp Bridge (Baileys)
 
-Local WhatsApp Web protocol bridge used by Athena. Listens only on `127.0.0.1:8765`.
+Local WhatsApp Web protocol bridge used by Atlas. Listens only on `127.0.0.1:8765`.
 
 ## Packaged app (new users)
 
-In Athena: **Settings ⚙ → WhatsApp Setup**.
+In Atlas: **Settings ⚙ → WhatsApp Setup**.
 
 1. Scan the QR with your phone: WhatsApp → Linked Devices → Link a device.
 2. Import a `Contacts.vcf` or Google CSV so spoken names resolve to numbers.
@@ -22,10 +22,10 @@ npm install
 npm start
 ```
 
-Athena can also spawn this automatically via `actions/whatsapp_bridge_client.py`.
+Atlas can also spawn this automatically via `actions/whatsapp_bridge_client.py`.
 
 Auth session is stored in `memory/whatsapp_baileys/` (gitignored).  
-When a QR is needed, it is written to `memory/whatsapp_baileys/qr.png` — Athena also shows it in WhatsApp Setup.
+When a QR is needed, it is written to `memory/whatsapp_baileys/qr.png` — Atlas also shows it in WhatsApp Setup.
 
 ## Endpoints
 
@@ -42,5 +42,5 @@ When a QR is needed, it is written to `memory/whatsapp_baileys/qr.png` — Athen
 
 ## Notification fallback
 
-While the bridge is **connected**, Athena detects messages from the protocol (Desktop notifications not required).  
-If the bridge is down, Athena may use Windows notification access as a backup — grant access when prompted on auto-reply enable.
+While the bridge is **connected**, Atlas detects messages from the protocol (Desktop notifications not required).  
+If the bridge is down, Atlas may use Windows notification access as a backup — grant access when prompted on auto-reply enable.

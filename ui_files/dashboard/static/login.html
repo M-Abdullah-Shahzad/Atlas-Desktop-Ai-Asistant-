@@ -155,7 +155,7 @@
   <script>
     // Try auto-reconnect with stored device token (set on first QR login)
     (async function() {
-      const devTok = localStorage.getItem('Athena_device_token');
+      const devTok = localStorage.getItem('Atlas_device_token');
       if (!devTok) return;
       document.getElementById('reconnecting').style.display = 'block';
       try {
@@ -166,14 +166,14 @@
         });
         const d = await r.json();
         if (d.ok && d.token) {
-          sessionStorage.setItem('Athena_key', d.key);
-          sessionStorage.setItem('Athena_token', d.token);
+          sessionStorage.setItem('Atlas_key', d.key);
+          sessionStorage.setItem('Atlas_token', d.token);
           location.replace('/');
           return;
         }
       } catch (_) {}
       // Device token rejected (server restarted) — clear it and show normal form
-      localStorage.removeItem('Athena_device_token');
+      localStorage.removeItem('Atlas_device_token');
       document.getElementById('reconnecting').style.display = 'none';
     })();
 
@@ -202,8 +202,8 @@
         shake(); return;
       }
       if (data.ok && data.token) {
-        sessionStorage.setItem('Athena_key', key);
-        sessionStorage.setItem('Athena_token', data.token);
+        sessionStorage.setItem('Atlas_key', key);
+        sessionStorage.setItem('Atlas_token', data.token);
         location.href = '/';
       } else {
         inp.value = '';

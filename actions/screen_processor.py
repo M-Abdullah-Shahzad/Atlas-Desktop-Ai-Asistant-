@@ -81,7 +81,7 @@ _IMG_MAX_H = 720
 _JPEG_Q    = 82
 
 def _assistant_name() -> str:
-    return _load_config().get("assistant_name") or "Athena"
+    return _load_config().get("assistant_name") or "Atlas"
 
 
 def _system_prompt() -> str:
@@ -353,7 +353,7 @@ class _VisionSession:
                             self._player.write_log(f"{_assistant_name()}: {full}")
                             print(f"[Vision] 💬 {full}")
                     transcript = []
-                    # Auto-close camera ~2s after Athena finishes speaking
+                    # Auto-close camera ~2s after Atlas finishes speaking
                     if self._player and hasattr(self._player, "stop_camera_stream"):
                         async def _deferred_close():
                             await asyncio.sleep(2.0)

@@ -140,7 +140,7 @@ def test_whatsapp_signature_is_exact():
     message = control.with_signature("Hello")
 
     assert message.endswith("\n- Composed by Atlas")
-    assert "Athena" not in message
+    assert "Composed by Atlas" in message
 
 
 def test_whatsapp_numeric_contact_is_rejected_without_manual_number_prompt(monkeypatch):

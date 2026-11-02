@@ -61,9 +61,9 @@ def _assistant_name() -> str:
     try:
         from memory.config_manager import get_assistant_name
 
-        return get_assistant_name() or "Athena"
+        return get_assistant_name() or "Atlas"
     except Exception:
-        return "Athena"
+        return "Atlas"
 
 
 def _get_api_key() -> str:

@@ -1,5 +1,5 @@
 """
-Spotify control for Athena.
+Spotify control for Atlas.
 
 Web API is the brain; Spotify Desktop is the speaker.
 - PKCE OAuth with refresh tokens in config/api_keys.json
@@ -261,7 +261,7 @@ def _open_in_browser(url: str) -> bool:
 
 def _login_hint() -> str:
     if getattr(sys, "frozen", False):
-        return "finish the browser login that Athena opens, then ask again"
+        return "finish the browser login that Atlas opens, then ask again"
     return "run python actions/spotify_control.py --login, then ask again"
 
 
@@ -627,7 +627,7 @@ def _auth_status() -> str | None:
             f"{DEFAULT_REDIRECT}, then add "
             '{"spotify": {"client_id": "YOUR_CLIENT_ID", '
             f'"redirect_uri": "{DEFAULT_REDIRECT}"}} '
-            "to config/api_keys.json next to Athena.exe. After that, "
+            "to config/api_keys.json next to Atlas.exe. After that, "
             f"{_login_hint()}."
         )
     if not str(cfg.get("refresh_token") or "").strip():
@@ -1413,7 +1413,7 @@ def spotify_control(
 def main() -> None:
     import argparse
 
-    parser = argparse.ArgumentParser(description="Athena Spotify controls")
+    parser = argparse.ArgumentParser(description="Atlas Spotify controls")
     parser.add_argument(
         "--login",
         action="store_true",

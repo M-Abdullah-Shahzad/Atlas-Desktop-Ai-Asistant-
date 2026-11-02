@@ -299,7 +299,7 @@ def looks_like_correction(text: str) -> bool:
     return bool(text and _CORRECTION_RE.search(str(text)))
 
 
-def log_correction(user_text: str, prev_athena: str = "") -> None:
+def log_correction(user_text: str, prev_atlas: str = "") -> None:
     global _dirty
     if not is_learning_enabled():
         return
@@ -317,7 +317,7 @@ def log_correction(user_text: str, prev_athena: str = "") -> None:
             "t": datetime.now().isoformat(timespec="seconds"),
             "kind": "correction",
             "user": user_text[:200],
-            "prev": str(prev_athena or "")[:200],
+            "prev": str(prev_atlas or "")[:200],
         })
         _experience["events"] = events[-_EXP_MAX:]
         _dirty = True

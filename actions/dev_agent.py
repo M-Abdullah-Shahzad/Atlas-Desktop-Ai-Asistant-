@@ -16,7 +16,7 @@ def get_base_dir():
 
 BASE_DIR         = get_base_dir()
 API_CONFIG_PATH  = BASE_DIR / "config" / "api_keys.json"
-PROJECTS_DIR     = Path.home() / "Desktop" / "AthenaProjects"
+PROJECTS_DIR     = Path.home() / "Desktop" / "AtlasProjects"
 MAX_FIX_ATTEMPTS = 5
 API_RETRY_ATTEMPTS = 4
 API_RETRY_DELAYS = (2, 4, 8)
@@ -574,7 +574,7 @@ def _build_project(
         if speak: speak(msg)
         return msg
 
-    proj_name    = project_name or plan.get("project_name", "Athena_project")
+    proj_name    = project_name or plan.get("project_name", "Atlas_project")
     proj_name    = re.sub(r"[^\w\-]", "_", proj_name)
     project_dir  = PROJECTS_DIR / proj_name
     project_dir.mkdir(parents=True, exist_ok=True)

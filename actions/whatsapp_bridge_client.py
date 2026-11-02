@@ -1,5 +1,5 @@
 """
-Local WhatsApp Baileys bridge client for Athena.
+Local WhatsApp Baileys bridge client for Atlas.
 
 Spawns whatsapp_bridge/server.js on demand and talks HTTP on 127.0.0.1:8765.
 """
@@ -326,7 +326,7 @@ def ensure_bridge(timeout: float = _START_TIMEOUT) -> tuple[bool, str]:
             st = cur.get("state", "")
             if st == "qr":
                 qp = cur.get("qrPath") or str(qr_path())
-                return True, f"Scan WhatsApp QR to link Athena: {qp}"
+                return True, f"Scan WhatsApp QR to link Atlas: {qp}"
             return True, f"WhatsApp bridge state={st}."
         time.sleep(0.35)
 

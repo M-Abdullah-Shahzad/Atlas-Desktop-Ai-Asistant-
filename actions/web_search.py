@@ -29,8 +29,8 @@ from core.gemini_models import get_flash_model
 def _wlog(msg: str, level: str = "info") -> None:
     print(f"[WebSearch] {msg}")
     try:
-        from core.logger import log as athena_log
-        athena_log(f"WebSearch: {msg}", level)
+        from core.logger import log as atlas_log
+        atlas_log(f"WebSearch: {msg}", level)
     except Exception:
         pass
 
@@ -117,7 +117,7 @@ def _wiki_lookup(query: str) -> str:
         import requests
     except ImportError:
         return ""
-    headers = {"User-Agent": "AthenaAssistant/1.0 (desktop assistant)"}
+    headers = {"User-Agent": "AtlasAssistant/1.0 (desktop assistant)"}
     try:
         r = requests.get(
             "https://en.wikipedia.org/w/api.php",

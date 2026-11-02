@@ -1,5 +1,5 @@
 """
-Gmail API bridge for Athena — OAuth + messages.send (no browser GUI).
+Gmail API bridge for Atlas — OAuth + messages.send (no browser GUI).
 
 Setup:
   1. Google Cloud Console → create OAuth client (Desktop app)

@@ -1,5 +1,5 @@
 """
-Permission decisions for Athena tools — risk levels + voice/text confirmation.
+Permission decisions for Atlas tools — risk levels + voice/text confirmation.
 Action-aware for compound tools (e.g. file_controller list = low, delete = high).
 User confirms by saying phrases like "go ahead" / "permission granted", or "abort".
 """
@@ -383,8 +383,8 @@ _LOW_TOOLS = {
     "save_memory",
     "flight_finder",
     "spotify_control",
-    "shutdown_athena",
-    "shutdown_Athena",
+    "shutdown_atlas",
+    "shutdown_Atlas",
     "shutdown_jarvis",
     "sleep_assistant",
     "desktop_control",

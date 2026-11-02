@@ -137,9 +137,9 @@ def _resolve_save_path(output_path: str, language: str, *, temp: bool = False) -
     if output_path:
         p = Path(output_path)
         return p if p.is_absolute() else DESKTOP / p
-    name = f"athena_code{_lang_ext(language)}"
+    name = f"atlas_code{_lang_ext(language)}"
     if temp:
-        d = Path(tempfile.gettempdir()) / "athena_code"
+        d = Path(tempfile.gettempdir()) / "atlas_code"
         d.mkdir(parents=True, exist_ok=True)
         return d / name
     return DESKTOP / name
@@ -182,7 +182,7 @@ def _has_error(output: str) -> bool:
 def _take_screenshot() -> Path | None:
     try:
         import pyautogui
-        screenshot_path = Path.home() / "Desktop" / f"Athena_debug_{int(time.time())}.png"
+        screenshot_path = Path.home() / "Desktop" / f"Atlas_debug_{int(time.time())}.png"
         screenshot = pyautogui.screenshot()
         screenshot.save(str(screenshot_path))
         print(f"[Code] 📸 Screenshot: {screenshot_path}")
@@ -556,7 +556,7 @@ def _run_action(file_path, args, timeout, player, code="", language="python") ->
                 "Use a database or Metabase to run it."
             )
         tmp = _resolve_save_path("", lang, temp=True)
-        tmp = tmp.parent / f"athena_run_{int(time.time())}{tmp.suffix}"
+        tmp = tmp.parent / f"atlas_run_{int(time.time())}{tmp.suffix}"
         _save_file(tmp, code)
         file_path = str(tmp)
     if not file_path:
