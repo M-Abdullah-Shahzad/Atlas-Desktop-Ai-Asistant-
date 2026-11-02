@@ -36,3 +36,11 @@ logs/
 models/
 .DS_Store
 Thumbs.db
+
+# Locally generated TLS private keys and certificates
+config/certs/*.key
+config/certs/atlas-local.crt
+config/certs/atlas-local.key
+
+# Personal WhatsApp contact index (regenerated from local Contacts exports)
+memory/contacts_index.json
