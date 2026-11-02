@@ -290,6 +290,16 @@ Other integrations can be configured from their relevant settings and setup scre
 └── setup.py                # Package setup
 ```
 
+## Local dashboard TLS
+
+Atlas generates a self-signed TLS certificate and a fresh private key locally on first dashboard startup. The key is stored under `config/certs/atlas-local.key` and is excluded from Git. A browser may show a trust warning because this certificate is self-signed; do not treat it as a publicly trusted certificate.
+
+For a certificate issued by your own CA, set both `ATLAS_TLS_KEY_FILE` and `ATLAS_TLS_CERT_FILE` to local file paths before starting Atlas. Do not commit private keys. Legacy `atlas.key` and `jarvis.key` files are intentionally not used.
+
+## Local WhatsApp contacts
+
+WhatsApp contacts are private local data. Import your own `.vcf` or `.csv` files into `Contacts/`; Atlas rebuilds `memory/contacts_index.json` locally from those files. The generated index is ignored by Git and should never be committed.
+
 ## Limitations and privacy notes
 
 - Gemini Live and most online integrations require an internet connection.

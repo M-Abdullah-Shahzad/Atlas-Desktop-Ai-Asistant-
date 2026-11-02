@@ -493,17 +493,76 @@ class DashboardServer:
 
     @staticmethod
     def _ssl_files() -> tuple[Path, Path] | None:
-        certs = BASE_DIR / "config" / "certs"
-        for stem in ("atlas", "Atlas"):
-            key, crt = certs / f"{stem}.key", certs / f"{stem}.crt"
-            if key.exists() and crt.exists():
-                return key, crt
-        # Compatibility filenames retained for existing local installations.
-        key, crt = certs / "jarvis.key", certs / "jarvis.crt"
-        if key.exists() and crt.exists():
-            return key, crt
-        return None
+        """Use an explicitly configured certificate or generate a local-only pair.
 
+        Never reuse the legacy atlas/jarvis private keys that were previously
+        committed to the public repository.
+        """
+        certs = BASE_DIR / "config" / "certs"
+        certs.mkdir(parents=True, exist_ok=True)
+
+        configured_key = os.getenv("ATLAS_TLS_KEY_FILE")
+        configured_cert = os.getenv("ATLAS_TLS_CERT_FILE")
+        if configured_key and configured_cert:
+            key = Path(configured_key).expanduser()
+            crt = Path(configured_cert).expanduser()
+            if key.is_file() and crt.is_file():
+                return key, crt
+
+        key = certs / "atlas-local.key"
+        crt = certs / "atlas-local.crt"
+        if key.is_file() and crt.is_file():
+            return key, crt
+
+        try:
+            import ipaddress
+            from datetime import datetime, timedelta
+            from cryptography import x509
+            from cryptography.hazmat.primitives import hashes, serialization
+            from cryptography.hazmat.primitives.asymmetric import rsa
+            from cryptography.x509.oid import NameOID
+
+            private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+            name = x509.Name([
+                x509.NameAttribute(NameOID.COMMON_NAME, "Atlas Local Dashboard")
+            ])
+            now = datetime.utcnow()
+            san = [
+                x509.DNSName("localhost"),
+                x509.IPAddress(ipaddress.ip_address("127.0.0.1")),
+            ]
+            try:
+                local_ip = socket.gethostbyname(socket.gethostname())
+                san.append(x509.IPAddress(ipaddress.ip_address(local_ip)))
+            except (OSError, ValueError):
+                pass
+
+            certificate = (
+                x509.CertificateBuilder()
+                .subject_name(name)
+                .issuer_name(name)
+                .public_key(private_key.public_key())
+                .serial_number(x509.random_serial_number())
+                .not_valid_before(now - timedelta(minutes=5))
+                .not_valid_after(now + timedelta(days=365))
+                .add_extension(x509.SubjectAlternativeName(san), critical=False)
+                .sign(private_key, hashes.SHA256())
+            )
+
+            key.write_bytes(private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            ))
+            try:
+                os.chmod(key, 0o600)
+            except OSError:
+                pass
+            crt.write_bytes(certificate.public_bytes(serialization.Encoding.PEM))
+            return key, crt
+        except Exception:
+            # Keep the dashboard available over HTTP if TLS generation is unavailable.
+            return None
     @staticmethod
     def _ssl_enabled() -> bool:
         return DashboardServer._ssl_files() is not None
