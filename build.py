@@ -236,9 +236,8 @@ def _stage_runtime_files() -> None:
         _copy_tree(SRC_PNG, DIST / "config" / "atlas.png")
     if SRC_ICO.exists():
         _copy_tree(SRC_ICO, DIST / "config" / "atlas.ico")
-    certs = ROOT / "config" / "certs"
-    if certs.exists():
-        _copy_tree(certs, DIST / "config" / "certs")
+    # TLS keys are generated on the target machine at first launch.
+    # Never bundle developer-machine private keys or certificates.
 
     vosk = ROOT / "models" / "vosk-small-en-us"
     if (vosk / "am" / "final.mdl").exists():
