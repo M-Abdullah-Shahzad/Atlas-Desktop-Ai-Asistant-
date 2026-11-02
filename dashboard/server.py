@@ -516,7 +516,7 @@ class DashboardServer:
 
         try:
             import ipaddress
-            from datetime import datetime, timedelta, timezone
+            from datetime import datetime, timedelta
             from cryptography import x509
             from cryptography.hazmat.primitives import hashes, serialization
             from cryptography.hazmat.primitives.asymmetric import rsa
@@ -526,7 +526,7 @@ class DashboardServer:
             name = x509.Name([
                 x509.NameAttribute(NameOID.COMMON_NAME, "Atlas Local Dashboard")
             ])
-            now = datetime.now(timezone.utc)
+            now = datetime.utcnow()
             san = [
                 x509.DNSName("localhost"),
                 x509.IPAddress(ipaddress.ip_address("127.0.0.1")),
