@@ -129,7 +129,7 @@ hiddenimports += [
     "attrs",
 ]
 
-_ICON = ROOT / "config" / "astra.ico"
+_ICON = ROOT / "config" / "atlas.ico"
 if not _ICON.exists():
     _ICON = ROOT / "config" / "Atlas.ico"
 

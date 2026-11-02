@@ -1,12 +1,12 @@
-# ATLAS — AI Desktop Assistant
+# Atlas Desktop AI Assistant
 
-ATLAS is a personal AI desktop assistant designed to help you interact with your computer through natural voice conversations and practical tools. Instead of being limited to a chat window, ATLAS can understand requests, work with files, interact with desktop applications, search the web, and connect with supported services.
+Atlas is a personal AI desktop assistant designed to help you interact with your computer through natural voice conversations and practical tools. Instead of being limited to a chat window, Atlas can understand requests, work with files, interact with desktop applications, search the web, and connect with supported services.
 
 The assistant uses **Gemini Live** for real-time voice interaction and provides a **PyQt6 desktop HUD** for voice, typed commands, activity, and results.
 
-> ATLAS is actively developed. Available features depend on your operating system, installed applications, API credentials, and integration setup.
+> Atlas is actively developed. Available features depend on your operating system, installed applications, API credentials, and integration setup.
 
-## What ATLAS can do
+## What Atlas can do
 
 ### Voice assistant and conversation
 
@@ -43,7 +43,7 @@ Screen sharing sends visual captures; it does not share computer audio.
 
 ### Computer control
 
-ATLAS can perform supported desktop actions, including:
+Atlas can perform supported desktop actions, including:
 
 - Open applications and manage windows.
 - Adjust volume and brightness.
@@ -70,7 +70,7 @@ The available controls depend on the operating system and installed applications
 
 ### File and document processing
 
-ATLAS provides supported workflows for common file types:
+Atlas provides supported workflows for common file types:
 
 | File type | Available workflows |
 |---|---|
@@ -174,7 +174,7 @@ WhatsApp setup from source requires Node.js 18+ and the packages listed in `what
 
 ### MetaTrader 5 market analysis
 
-When a MetaTrader 5 terminal is available, ATLAS can:
+When a MetaTrader 5 terminal is available, Atlas can:
 
 - Check connection status.
 - Retrieve supported symbol quotes, including bid, ask, and spread.
@@ -184,11 +184,11 @@ When a MetaTrader 5 terminal is available, ATLAS can:
 - Capture and analyze chart snapshots.
 - Monitor the connection and record structured connection events.
 
-**The MetaTrader 5 integration is read-only. ATLAS does not place trades, submit orders, or manage trading positions.**
+**The MetaTrader 5 integration is read-only. Atlas does not place trades, submit orders, or manage trading positions.**
 
 ## Permissions and safety
 
-ATLAS uses risk levels to manage tool execution:
+Atlas uses risk levels to manage tool execution:
 
 - **Low risk:** may run automatically when the configured policy allows it.
 - **Medium and high risk:** require confirmation through supported voice, typed, or remote controls.
@@ -227,7 +227,7 @@ Some operating-system actions are Windows-specific. Other platform support depen
    python -m pip install -r requirements.txt
    ```
 
-4. Start ATLAS:
+4. Start Atlas:
 
    ```bash
    python main.py
@@ -241,7 +241,7 @@ The application stores the key in `config/api_keys.json`. Keep this file private
 
 ### WhatsApp
 
-1. Open **Settings → WhatsApp Setup** in ATLAS.
+1. Open **Settings → WhatsApp Setup** in Atlas.
 2. Scan the QR code using WhatsApp's **Linked Devices** option.
 3. Import contacts when you want spoken contact names to resolve more reliably.
 
@@ -253,7 +253,7 @@ npm install
 npm start
 ```
 
-ATLAS can also start the local bridge itself when the required dependencies are available.
+Atlas can also start the local bridge itself when the required dependencies are available.
 
 ### Gmail
 
@@ -303,4 +303,4 @@ Other integrations can be configured from their relevant settings and setup scre
 
 ---
 
-ATLAS is a work in progress. Features and integrations may change as development continues.
+Atlas is a work in progress. Features and integrations may change as development continues.

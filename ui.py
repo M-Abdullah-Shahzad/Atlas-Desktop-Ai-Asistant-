@@ -193,7 +193,7 @@ def qcol(h: str, a: int = 255) -> QColor:
 
 def app_icon_file() -> Path:
     """Atlas window / tray / shortcut icon (png preferred, ico fallback)."""
-    for name in ("astra.png", "astra.ico", "atlas.png", "atlas.ico", "Atlas.ico"):
+    for name in ("atlas.png", "atlas.ico", "atlas.png", "atlas.ico", "Atlas.ico"):
         p = CONFIG_DIR / name
         if p.exists():
             return p
@@ -3027,11 +3027,11 @@ class MainWindow(QMainWindow):
         target, args, work_dir = launch_spec()
         desktop = self._get_desktop_dir()
 
-        ico_path = CONFIG_DIR / "astra.ico"
+        ico_path = CONFIG_DIR / "atlas.ico"
         if not ico_path.exists():
             ico_path = app_icon_file()
         if not ico_path.exists():
-            ico_path = CONFIG_DIR / "astra.ico"
+            ico_path = CONFIG_DIR / "atlas.ico"
             self._build_Atlas_icon(ico_path)
 
         try:
@@ -3105,7 +3105,7 @@ class MainWindow(QMainWindow):
             # ── Linux — .desktop file (Terminal=false, no console) ────────────
             else:
                 # Export .ico → .png for better desktop integration
-                png_path = CONFIG_DIR / "astra.png"
+                png_path = CONFIG_DIR / "atlas.png"
                 if not png_path.exists():
                     png_path = ico_path.with_suffix(".png")
                 if not png_path.exists() and ico_path.exists():
@@ -4276,10 +4276,7 @@ class MainWindow(QMainWindow):
         display = self._assistant_name.upper()
         self.setWindowTitle(f"{display} — ATLAS OVERLAY")
         self._title_lbl.setText(display)
-        if display in ("ATLAS", "JARVIS", "J.A.R.V.I.S"):
-            self._sub_lbl.setText("Wisdom · Precision · Dominion")
-        else:
-            self._sub_lbl.setText("Personal AI Assistant")
+        self._sub_lbl.setText("Personal AI Assistant")
         self._log._ai_name_lc = self._assistant_name.lower()
         self.hud._assistant_name = display
         self._update_tray_tooltip()
@@ -4339,8 +4336,8 @@ class MainWindow(QMainWindow):
     def _tray_icon(self) -> QIcon:
         for path in (
             Path(self._face_path),
-            CONFIG_DIR / "astra.png",
-            CONFIG_DIR / "astra.ico",
+            CONFIG_DIR / "atlas.png",
+            CONFIG_DIR / "atlas.ico",
             CONFIG_DIR / "atlas.png",
             CONFIG_DIR / "atlas.ico",
             CONFIG_DIR / "Atlas.ico",

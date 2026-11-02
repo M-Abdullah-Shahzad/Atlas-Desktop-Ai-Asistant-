@@ -1752,7 +1752,7 @@ class MainWindow(QMainWindow):
         if _ui_color and _ui_color.lower() != DEFAULT_UI_COLOR:
             apply_ui_accent(_ui_color)
 
-        self.setWindowTitle(f"{_display} — MARK XLIX")
+        self.setWindowTitle(f"{_display} — ATLAS")
         self.setMinimumSize(_MIN_W, _MIN_H)
         self.resize(_DEFAULT_W, _DEFAULT_H)
 
@@ -2430,7 +2430,7 @@ class MainWindow(QMainWindow):
             l.setStyleSheet(f"color: {color}; background: transparent;")
             return l
 
-        lay.addWidget(_badge("MARK XLIX", C.PRI_DIM))
+        lay.addWidget(_badge("ATLAS", C.PRI_DIM))
         lay.addSpacing(8)
         self._drawer_btn = QPushButton("⚙")
         self._drawer_btn.setFixedSize(26, 26)
@@ -3099,12 +3099,9 @@ class MainWindow(QMainWindow):
         """Update all name/theme-dependent UI elements and persist to config."""
         self._assistant_name = name.strip() or DEFAULT_ASSISTANT_NAME
         display = self._assistant_name.upper()
-        self.setWindowTitle(f"{display} — MARK XLIX")
+        self.setWindowTitle(f"{display} — ATLAS")
         self._title_lbl.setText(display)
-        if display in ("ATLAS", "JARVIS", "J.A.R.V.I.S"):
-            self._sub_lbl.setText("Wisdom · Precision · Dominion")
-        else:
-            self._sub_lbl.setText("Personal AI Assistant")
+        self._sub_lbl.setText("Personal AI Assistant")
         self._log._ai_name_lc = self._assistant_name.lower()
         self.hud._assistant_name = display
 

@@ -429,7 +429,7 @@ class DashboardServer:
             key, crt = certs / f"{stem}.key", certs / f"{stem}.crt"
             if key.exists() and crt.exists():
                 return key, crt
-        # Legacy filenames from the JARVIS-era pack (same files, old names)
+        # Compatibility filenames retained for existing local installations.
         key, crt = certs / "jarvis.key", certs / "jarvis.crt"
         if key.exists() and crt.exists():
             return key, crt

@@ -24,8 +24,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 DIST = ROOT / "dist" / "Atlas"
 SPEC = ROOT / "atlas.spec"
-SRC_PNG = ROOT / "config" / "astra.png"
-SRC_ICO = ROOT / "config" / "astra.ico"
+SRC_PNG = ROOT / "config" / "atlas.png"
+SRC_ICO = ROOT / "config" / "atlas.ico"
 
 
 def _copy_tree(src: Path, dst: Path, ignore=None) -> None:
@@ -233,9 +233,9 @@ def _stage_runtime_files() -> None:
     _copy_tree(ROOT / "dashboard" / "static", DIST / "dashboard" / "static")
     _copy_tree(ROOT / "config" / "permissions.json", DIST / "config" / "permissions.json")
     if SRC_PNG.exists():
-        _copy_tree(SRC_PNG, DIST / "config" / "astra.png")
+        _copy_tree(SRC_PNG, DIST / "config" / "atlas.png")
     if SRC_ICO.exists():
-        _copy_tree(SRC_ICO, DIST / "config" / "astra.ico")
+        _copy_tree(SRC_ICO, DIST / "config" / "atlas.ico")
     certs = ROOT / "config" / "certs"
     if certs.exists():
         _copy_tree(certs, DIST / "config" / "certs")

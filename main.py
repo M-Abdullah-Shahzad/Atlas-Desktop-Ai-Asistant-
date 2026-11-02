@@ -247,7 +247,7 @@ def _load_system_prompt() -> str:
             "Sound human: complete sentences, a natural reaction to what happened, not clipped. "
             "Always use the provided tools to complete tasks. "
             "Never simulate or guess results — always call the appropriate tool. "
-            "Never call yourself Jarvis or JARVIS."
+            "Always identify yourself as Atlas."
         )
 
 _CTRL_RE = re.compile(r"<ctrl\d+>", re.IGNORECASE)
@@ -1868,7 +1868,7 @@ class AtlasLive:
             f"[IDENTITY]\n"
             f"Your name is {self._asst_name}. You are a woman — speak and act as a female assistant. "
             f"Always refer to yourself as {self._asst_name}. "
-            f"Never call yourself Jarvis, JARVIS, or J.A.R.V.I.S.\n"
+            f"Always identify yourself as Atlas.\n"
             f"{_addr}\n"
             f"RESPONSE LANGUAGE: Default English. Currently speaking {get_response_language()}. "
             f"The user may speak any language — understand it, but do not mirror it. "
@@ -3453,8 +3453,8 @@ def main():
 
     face = None
     for candidate in (
-        BASE_DIR / "config" / "astra.png",
-        BASE_DIR / "config" / "astra.ico",
+        BASE_DIR / "config" / "atlas.png",
+        BASE_DIR / "config" / "atlas.ico",
         BASE_DIR / "config" / "atlas.png",
         BASE_DIR / "config" / "atlas.ico",
         BASE_DIR / "face.png",
